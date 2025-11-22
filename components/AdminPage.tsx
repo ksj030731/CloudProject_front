@@ -72,7 +72,7 @@ export function AdminPage({ courses, onCoursesUpdate }: AdminPageProps) {
       toast.error('필수 정보를 입력해주세요.');
       return;
     }
-
+//안녕
 const course: Course = {
       id: Date.now(),
       name: newCourse.name!,
