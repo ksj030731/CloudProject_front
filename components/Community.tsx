@@ -1,24 +1,13 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Card, CardContent, CardHeader } from './ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Button } from './ui/button';
-import { Badge } from './ui/badge';
-import { Avatar, Avatar as AvatarFallback } from './ui/avatar';
+import { Avatar, AvatarFallback } from './ui/avatar';
 import { 
-  Heart, 
-  MessageCircle, 
-  Star, 
-  Trophy,
-  ThumbsUp,
-  Crown,
-  MapPin,
-  Calendar,
-  User,
-  MessageSquare,
-  PenSquare,
-  X
+  MessageCircle, Trophy, ThumbsUp, MapPin, MessageSquare, PenSquare, Star, Megaphone
 } from 'lucide-react';
-import { Course, User as UserType, Review, Badge as BadgeType, CourseRanking, GlobalRanking } from '../types';
+// ✨ [수정] Badge 이름 충돌 해결 (Badge as BadgeType)
+import { Course, Review, User, Badge as BadgeType, Announcement, CourseRanking, GlobalRanking } from '../types';
 import { HallOfFame } from './HallOfFame';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
@@ -28,12 +17,14 @@ import { Label } from './ui/label';
 interface CommunityProps {
   courses: Course[];
   reviews: Review[];
-  currentUser: UserType | null;
+  currentUser: User | null;
   badges: BadgeType[];
   completedCourses: number[];
+  onCourseClick: (course: Course) => void;
+  
+  announcements: Announcement[];
   courseRankings: CourseRanking[];
   globalRanking: GlobalRanking;
-  onCourseClick: (course: Course) => void;
 }
 
 interface CommunityReview extends Review {
@@ -49,19 +40,18 @@ interface Comment {
   date: string;
 }
 
-
-
 export function Community({ 
   courses, 
   reviews, 
   currentUser, 
-  badges,
-  completedCourses,
+  onCourseClick,
+  announcements,
   courseRankings,
-  globalRanking,
-  onCourseClick 
+  globalRanking
 }: CommunityProps) {
+  
   const [selectedTab, setSelectedTab] = useState('reviews');
+  
   const [communityReviews, setCommunityReviews] = useState<CommunityReview[]>(
     reviews.map(review => ({
       ...review,
@@ -69,6 +59,7 @@ export function Community({
       liked: false
     }))
   );
+
   const [isWriteModalOpen, setIsWriteModalOpen] = useState(false);
   const [newReview, setNewReview] = useState({
     courseId: 0,
@@ -80,11 +71,7 @@ export function Community({
     setCommunityReviews(prev => 
       prev.map(review => 
         review.id === reviewId 
-          ? { 
-              ...review, 
-              liked: !review.liked,
-              likes: review.liked ? review.likes - 1 : review.likes + 1
-            }
+          ? { ...review, liked: !review.liked, likes: review.liked ? review.likes - 1 : review.likes + 1 }
           : review
       )
     );
@@ -92,7 +79,6 @@ export function Community({
 
   const handleComment = (reviewId: number, content: string) => {
     if (!currentUser || !content.trim()) return;
-
     const newComment: Comment = {
       id: Date.now(),
       userId: currentUser.id,
@@ -100,21 +86,15 @@ export function Community({
       content: content.trim(),
       date: new Date().toISOString()
     };
-
     setCommunityReviews(prev =>
       prev.map(review =>
-        review.id === reviewId
-          ? { ...review, comments: [...review.comments, newComment] }
-          : review
+        review.id === reviewId ? { ...review, comments: [...review.comments, newComment] } : review
       )
     );
   };
 
   const handleSubmitReview = () => {
-    if (!currentUser || !newReview.courseId || !newReview.content.trim()) {
-      return;
-    }
-
+    if (!currentUser || !newReview.courseId || !newReview.content.trim()) return;
     const review: CommunityReview = {
       id: Date.now(),
       userId: currentUser.id,
@@ -128,285 +108,128 @@ export function Community({
       liked: false,
       photos: []
     };
-
     setCommunityReviews(prev => [review, ...prev]);
     setIsWriteModalOpen(false);
-    setNewReview({
-      courseId: 0,
-      rating: 5,
-      content: ''
-    });
+    setNewReview({ courseId: 0, rating: 5, content: '' });
   };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('ko-KR');
   };
 
-  const getCourseById = (courseId: number) => {
-    return courses.find(c => c.id === courseId);
-  };
+  const getCourseById = (courseId: number) => courses.find(c => c.id === courseId);
 
   return (
     <div className="min-h-screen pt-20 pb-12 bg-gray-50">
       <div className="container mx-auto px-4">
-        <div className="mb-4">
-          <h1 className="mb-2 text-center text-4xl font-bold">
+        <div className="mb-8 text-center">
+          <h1 className="mb-2 text-4xl font-bold">
             {selectedTab === 'hall-of-fame' ? '갈맷길 명예의 전당' : '갈맷길 커뮤니티'}
           </h1>
-          <p className="text-gray-600 text-center max-w-2xl mx-auto">
-            {selectedTab === 'hall-of-fame' 
-              ? '갈맷길을 정복한 최고의 도전자들을 만나보세요. 각 코스별 최다 완주 횟수 기준 랭킹을 확인할 수 있습니다.'
-              : '갈맷길을 함께 걷는 사람들과 소통하고, 도전과제를 달성하며, 코스별 기록을 확인해보세요.'
-            }
+          <p className="text-gray-600 max-w-2xl mx-auto">
+            함께 걷는 즐거움을 나누고, 새로운 기록에 도전해보세요.
           </p>
         </div>
 
         <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="reviews" className="flex items-center gap-2">
-              <MessageCircle className="w-4 h-4" />
-              리뷰 & 후기
-            </TabsTrigger>
-            <TabsTrigger value="hall-of-fame" className="flex items-center gap-2">
-              <Trophy className="w-4 h-4" />
-              명예의 전당
-            </TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3 max-w-2xl mx-auto">
+            <TabsTrigger value="reviews" className="gap-2"><MessageCircle className="w-4 h-4"/> 리뷰 & 후기</TabsTrigger>
+            <TabsTrigger value="hall-of-fame" className="gap-2"><Trophy className="w-4 h-4"/> 명예의 전당</TabsTrigger>
+            <TabsTrigger value="notices" className="gap-2"><Megaphone className="w-4 h-4"/> 공지사항</TabsTrigger>
           </TabsList>
 
-          {/* 리뷰 & 후기 탭 */}
+          {/* 1. 리뷰 탭 */}
           <TabsContent value="reviews" className="space-y-6">
-            {/* 글쓰기 버튼 */}
             <div className="flex justify-end">
               {currentUser ? (
                 <Dialog open={isWriteModalOpen} onOpenChange={setIsWriteModalOpen}>
                   <DialogTrigger asChild>
-                    <Button className="flex items-center gap-2">
-                      <PenSquare className="w-4 h-4" />
-                      리뷰 작성하기
-                    </Button>
+                    <Button className="gap-2"><PenSquare className="w-4 h-4" /> 리뷰 작성하기</Button>
                   </DialogTrigger>
                   <DialogContent className="max-w-2xl">
                     <DialogHeader>
                       <DialogTitle>리뷰 작성하기</DialogTitle>
-                      <DialogDescription>
-                        갈맷길 코스를 선택하고 경험을 공유해주세요.
-                      </DialogDescription>
+                      <DialogDescription>갈맷길 코스 경험을 공유해주세요.</DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
-                      {/* 코스 선택 */}
                       <div className="space-y-2">
-                        <Label htmlFor="course">코스 선택</Label>
+                        <Label>코스 선택</Label>
                         <Select 
                           value={newReview.courseId.toString()} 
-                          onValueChange={(value) => setNewReview(prev => ({ ...prev, courseId: parseInt(value) }))}
+                          onValueChange={(val) => setNewReview(prev => ({ ...prev, courseId: parseInt(val) }))}
                         >
-                          <SelectTrigger id="course">
-                            <SelectValue placeholder="코스를 선택하세요" />
-                          </SelectTrigger>
+                          <SelectTrigger><SelectValue placeholder="코스를 선택하세요" /></SelectTrigger>
                           <SelectContent>
-                            {courses.map((course) => (
-                              <SelectItem key={course.id} value={course.id.toString()}>
-                                {course.name}
-                              </SelectItem>
-                            ))}
+                            {courses.map((c) => <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>)}
                           </SelectContent>
                         </Select>
                       </div>
-
-                      {/* 별점 */}
                       <div className="space-y-2">
                         <Label>별점</Label>
-                        <div className="flex items-center gap-2">
-                          {[1, 2, 3, 4, 5].map((rating) => (
-                            <Star
-                              key={rating}
-                              className={`w-8 h-8 cursor-pointer transition-colors ${
-                                rating <= newReview.rating
-                                  ? 'text-yellow-400 fill-current'
-                                  : 'text-gray-300'
-                              }`}
-                              onClick={() => setNewReview(prev => ({ ...prev, rating }))}
-                            />
+                        <div className="flex items-center gap-1">
+                          {[1, 2, 3, 4, 5].map((r) => (
+                            <Star key={r} className={`w-8 h-8 cursor-pointer ${r <= newReview.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} onClick={() => setNewReview(prev => ({ ...prev, rating: r }))} />
                           ))}
-                          <span className="ml-2 text-sm text-gray-600">
-                            {newReview.rating}점
-                          </span>
                         </div>
                       </div>
-
-                      {/* 내용 */}
                       <div className="space-y-2">
-                        <Label htmlFor="content">리뷰 내용</Label>
-                        <Textarea
-                          id="content"
-                          placeholder="갈맷길을 걸으며 느낀 점, 추천하고 싶은 점 등을 자유롭게 작성해주세요."
+                        <Label>내용</Label>
+                        <Textarea 
+                          placeholder="후기를 작성해주세요." 
                           value={newReview.content}
                           onChange={(e) => setNewReview(prev => ({ ...prev, content: e.target.value }))}
-                          rows={8}
-                          className="resize-none"
+                          rows={5} 
                         />
-                        <p className="text-xs text-gray-500">
-                          {newReview.content.length} / 1000자
-                        </p>
                       </div>
-
-                      {/* 버튼 */}
-                      <div className="flex justify-end gap-2 pt-4">
-                        <Button 
-                          variant="outline" 
-                          onClick={() => setIsWriteModalOpen(false)}
-                        >
-                          취소
-                        </Button>
-                        <Button 
-                          onClick={handleSubmitReview}
-                          disabled={!newReview.courseId || !newReview.content.trim()}
-                        >
-                          작성 완료
-                        </Button>
+                      <div className="flex justify-end gap-2">
+                        <Button variant="outline" onClick={() => setIsWriteModalOpen(false)}>취소</Button>
+                        <Button onClick={handleSubmitReview} disabled={!newReview.courseId || !newReview.content.trim()}>작성 완료</Button>
                       </div>
                     </div>
                   </DialogContent>
                 </Dialog>
               ) : (
-                <Button disabled className="flex items-center gap-2">
-                  <PenSquare className="w-4 h-4" />
-                  로그인 후 이용 가능
-                </Button>
+                <Button disabled className="gap-2"><PenSquare className="w-4 h-4" /> 로그인 후 작성 가능</Button>
               )}
             </div>
 
             <div className="grid gap-6">
               {communityReviews.length === 0 ? (
-                <Card>
-                  <CardContent className="py-12 text-center">
-                    <MessageCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-500">아직 작성된 리뷰가 없습니다.</p>
-                    <p className="text-gray-400 text-sm mt-2">
-                      첫 번째 리뷰를 작성해보세요!
-                    </p>
-                  </CardContent>
-                </Card>
+                <Card><CardContent className="py-12 text-center text-gray-500">아직 리뷰가 없습니다.</CardContent></Card>
               ) : (
                 communityReviews.map((review) => {
                   const course = getCourseById(review.courseId);
                   return (
-                    <Card key={review.id} className="overflow-hidden">
-                      <CardHeader className="space-y-4">
-                        <div className="flex items-center justify-between">
+                    <Card key={review.id}>
+                      <CardHeader className="pb-3">
+                        <div className="flex justify-between items-start">
                           <div className="flex items-center gap-3">
-                            <Avatar>
-                              <AvatarFallback className="bg-blue-100 text-blue-600">
-                                {review.userName.charAt(0)}
-                              </AvatarFallback>
-                            </Avatar>
+                            <Avatar><AvatarFallback>{review.userName.charAt(0)}</AvatarFallback></Avatar>
                             <div>
                               <p className="font-medium">{review.userName}</p>
-                              <p className="text-sm text-gray-500">
-                                {formatDate(review.date)}
-                              </p>
+                              <p className="text-xs text-gray-500">{formatDate(review.date)}</p>
                             </div>
                           </div>
-                          <div className="flex items-center gap-1">
-                            {[...Array(5)].map((_, i) => (
-                              <Star
-                                key={i}
-                                className={`w-4 h-4 ${
-                                  i < review.rating
-                                    ? 'text-yellow-400 fill-current'
-                                    : 'text-gray-300'
-                                }`}
-                              />
-                            ))}
+                          <div className="flex text-yellow-400">
+                            {[...Array(5)].map((_, i) => <Star key={i} className={`w-4 h-4 ${i < review.rating ? 'fill-current' : 'text-gray-300'}`} />)}
                           </div>
                         </div>
-                        
                         {course && (
-                          <div 
-                            className="flex items-center gap-2 text-blue-600 cursor-pointer hover:text-blue-700"
-                            onClick={() => onCourseClick(course)}
-                          >
-                            <MapPin className="w-4 h-4" />
-                            <span className="text-sm font-medium">{course.name}</span>
+                          <div className="mt-2 flex items-center gap-1 text-sm text-blue-600 cursor-pointer" onClick={() => onCourseClick(course)}>
+                            <MapPin className="w-3 h-3" /> {course.name}
                           </div>
                         )}
                       </CardHeader>
-                      
                       <CardContent className="space-y-4">
-                        <p className="text-gray-700">{review.content}</p>
-                        
-                        {review.photos && review.photos.length > 0 && (
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                            {review.photos.map((photo, index) => (
-                              <div
-                                key={index}
-                                className="aspect-square bg-gray-200 rounded-lg flex items-center justify-center"
-                              >
-                                <span className="text-gray-400 text-xs">
-                                  사진 {index + 1}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                        
-                        <div className="flex items-center justify-between pt-4 border-t">
-                          <Button
-                            variant={review.liked ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => handleLike(review.id)}
-                            className="flex items-center gap-2"
-                          >
-                            <ThumbsUp className="w-4 h-4" />
-                            좋아요 {review.likes}
+                        <p className="text-gray-700 whitespace-pre-line">{review.content}</p>
+                        <div className="flex justify-between items-center pt-4 border-t">
+                          <Button variant="ghost" size="sm" className="gap-1" onClick={() => handleLike(review.id)}>
+                            <ThumbsUp className={`w-4 h-4 ${review.liked ? 'fill-blue-500 text-blue-500' : ''}`} /> {review.likes}
                           </Button>
-                          
-                          <div className="flex items-center gap-2 text-gray-500">
-                            <MessageSquare className="w-4 h-4" />
-                            <span className="text-sm">댓글 {review.comments.length}</span>
+                          <div className="flex items-center gap-1 text-gray-500 text-sm">
+                            <MessageSquare className="w-4 h-4" /> {review.comments.length}
                           </div>
                         </div>
-                        
-                        {/* 댓글 섹션 */}
-                        {review.comments.length > 0 && (
-                          <div className="space-y-3 pt-4 border-t">
-                            {review.comments.map((comment) => (
-                              <div key={comment.id} className="flex gap-3">
-                                <Avatar className="w-8 h-8">
-                                  <AvatarFallback className="bg-gray-100 text-gray-600 text-xs">
-                                    {comment.userName.charAt(0)}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <div className="flex-1">
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-sm font-medium">{comment.userName}</span>
-                                    <span className="text-xs text-gray-500">
-                                      {formatDate(comment.date)}
-                                    </span>
-                                  </div>
-                                  <p className="text-sm text-gray-700 mt-1">{comment.content}</p>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                        
-                        {/* 댓글 작성 */}
-                        {currentUser && (
-                          <div className="flex gap-2 pt-2">
-                            <input
-                              type="text"
-                              placeholder="댓글을 작성해보세요..."
-                              className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm"
-                              onKeyPress={(e) => {
-                                if (e.key === 'Enter') {
-                                  handleComment(review.id, e.currentTarget.value);
-                                  e.currentTarget.value = '';
-                                }
-                              }}
-                            />
-                          </div>
-                        )}
                       </CardContent>
                     </Card>
                   );
@@ -415,10 +238,9 @@ export function Community({
             </div>
           </TabsContent>
 
-
-
-          {/* 명예의 전당 탭 */}
+          {/* 2. 명예의 전당 탭 */}
           <TabsContent value="hall-of-fame">
+            {/* ✨ [수정] 중복 속성 없이 깔끔하게 전달 */}
             <HallOfFame
               courses={courses}
               courseRankings={courseRankings}
@@ -426,6 +248,35 @@ export function Community({
               currentUser={currentUser}
               onCourseClick={onCourseClick}
             />
+          </TabsContent>
+
+          {/* 3. 공지사항 탭 */}
+          <TabsContent value="notices">
+            <div className="grid gap-4">
+              {announcements.length === 0 ? (
+                <div className="text-center py-12 text-gray-500">등록된 공지사항이 없습니다.</div>
+              ) : (
+                announcements.map((notice) => (
+                  <Card key={notice.id} className="hover:shadow-md transition-shadow cursor-pointer">
+                    <CardContent className="p-6 flex items-start gap-4">
+                      <div className="p-3 bg-blue-100 rounded-full text-blue-600 flex-shrink-0">
+                        <Megaphone className="w-5 h-5" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
+                            {notice.category === 'event' ? '이벤트' : notice.category === 'maintenance' ? '공사' : '공지'}
+                          </span>
+                          <span className="text-xs text-gray-500">{formatDate(notice.date)}</span>
+                        </div>
+                        <h3 className="font-bold text-lg mb-1">{notice.title}</h3>
+                        <p className="text-gray-600 text-sm line-clamp-2">{notice.content}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </div>
           </TabsContent>
         </Tabs>
       </div>

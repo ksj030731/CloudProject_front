@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
-import { Badge } from './ui/badge';
+import { Badge } from './ui/badge'; // UI 컴포넌트 Badge
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Progress } from './ui/progress';
 import { 
@@ -23,6 +23,7 @@ import {
   TrendingUp,
   Medal
 } from 'lucide-react';
+// 타입 Badge는 이름 충돌 방지를 위해 BadgeType으로 별칭 사용
 import { User as UserType, Course, Review, Badge as BadgeType } from '../types';
 import { CourseCard } from './CourseCard';
 import { ImageWithFallback } from './figma/ImageWithFallback';
@@ -43,22 +44,26 @@ interface MyPageProps {
   user: UserType;
   courses: Course[];
   reviews: Review[];
-  badges: BadgeType[];
+  badges: BadgeType[]; // 내가 획득한 뱃지
   favorites: number[];
   completedCourses: number[];
   onCourseClick: (course: Course) => void;
   onUserUpdate: (user: UserType) => void;
+  
+  // ✨ [추가] 전체 뱃지 목록 (도감용)
+  allBadges: BadgeType[]; 
 }
 
 export function MyPage({ 
   user, 
   courses, 
   reviews, 
-  badges, 
+  badges: myBadges, // 획득한 뱃지
   favorites, 
-  completedCourses, 
+  completedCourses,
   onCourseClick,
-  onUserUpdate 
+  onUserUpdate,
+  allBadges // 전체 뱃지 (App.tsx에서 넘겨줘야 함)
 }: MyPageProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedUser, setEditedUser] = useState(user);
@@ -70,7 +75,7 @@ export function MyPage({
   const completionRate = (completedCourses.length / courses.length) * 100;
   const nextMilestone = completedCourses.length < 5 ? 5 : completedCourses.length < 10 ? 10 : 26;
 
-  // 도전과제 목록
+  // 도전과제 목록 (이건 로컬 로직이라 그대로 유지하거나 필요시 백엔드 연동)
   const challenges: Challenge[] = [
     {
       id: 1,
@@ -146,7 +151,7 @@ export function MyPage({
     ));
   };
 
-  const getBadgeRarityColor = (rarity: string) => {
+  const getBadgeRarityColor = (rarity: string | undefined) => {
     switch (rarity) {
       case 'common': return 'bg-gray-100 text-gray-700 border-gray-300';
       case 'rare': return 'bg-blue-100 text-blue-700 border-blue-300';
@@ -160,7 +165,8 @@ export function MyPage({
     return Math.min((current / target) * 100, 100);
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return '-';
     return new Date(dateString).toLocaleDateString('ko-KR');
   };
 
@@ -174,7 +180,11 @@ export function MyPage({
               {/* 프로필 이미지 */}
               <div className="flex-shrink-0">
                 <div className="w-24 h-24 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center">
-                  <User className="w-12 h-12 text-white" />
+                  {user.picture ? (
+                    <img src={user.picture} alt="프로필" className="w-full h-full rounded-full object-cover" />
+                  ) : (
+                    <User className="w-12 h-12 text-white" />
+                  )}
                 </div>
               </div>
 
@@ -202,12 +212,10 @@ export function MyPage({
                     </div>
                     <div className="flex space-x-2">
                       <Button onClick={handleSave} size="sm">
-                        <Save className="w-4 h-4 mr-2" />
-                        저장
+                        <Save className="w-4 h-4 mr-2" /> 저장
                       </Button>
                       <Button onClick={handleCancel} variant="outline" size="sm">
-                        <X className="w-4 h-4 mr-2" />
-                        취소
+                        <X className="w-4 h-4 mr-2" /> 취소
                       </Button>
                     </div>
                   </div>
@@ -216,8 +224,7 @@ export function MyPage({
                     <div className="flex items-center justify-between">
                       <h1 className="text-2xl font-bold">{user.nickname}</h1>
                       <Button onClick={() => setIsEditing(true)} variant="outline" size="sm">
-                        <Edit3 className="w-4 h-4 mr-2" />
-                        편집
+                        <Edit3 className="w-4 h-4 mr-2" /> 편집
                       </Button>
                     </div>
                     <div className="flex items-center text-gray-600">
@@ -226,7 +233,7 @@ export function MyPage({
                     </div>
                     <div className="flex items-center text-gray-600">
                       <Calendar className="w-4 h-4 mr-1" />
-                      <span>가입일: {new Date(user.joinDate).toLocaleDateString()}</span>
+                      <span>가입일: {formatDate(user.joinDate)}</span>
                     </div>
                   </div>
                 )}
@@ -247,7 +254,7 @@ export function MyPage({
                   <div className="text-sm text-gray-600">작성 리뷰</div>
                 </div>
                 <div className="p-3 bg-yellow-50 rounded-lg">
-                  <div className="text-2xl font-bold text-yellow-600">{badges.length}</div>
+                  <div className="text-2xl font-bold text-yellow-600">{myBadges.length}</div>
                   <div className="text-sm text-gray-600">획득 뱃지</div>
                 </div>
               </div>
@@ -259,8 +266,7 @@ export function MyPage({
         <Card className="mb-8">
           <CardHeader>
             <CardTitle className="flex items-center">
-              <Target className="w-5 h-5 mr-2" />
-              나의 갈맷길 여정
+              <Target className="w-5 h-5 mr-2" /> 나의 갈맷길 여정
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -279,8 +285,7 @@ export function MyPage({
             {/* 다음 목표 */}
             <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-lg">
               <h4 className="font-semibold mb-2 flex items-center">
-                <TrendingUp className="w-4 h-4 mr-2" />
-                다음 목표
+                <TrendingUp className="w-4 h-4 mr-2" /> 다음 목표
               </h4>
               <p className="text-gray-700">
                 {nextMilestone}개 코스 완주까지 {nextMilestone - completedCourses.length}개 남았어요!
@@ -296,12 +301,9 @@ export function MyPage({
             {/* AI 추천 */}
             <div className="bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-lg">
               <h4 className="font-semibold mb-2 flex items-center">
-                <Star className="w-4 h-4 mr-2" />
-                AI 추천 코스
+                <Star className="w-4 h-4 mr-2" /> AI 추천 코스
               </h4>
-              <p className="text-gray-700 mb-3">
-                회원님의 완주 기록을 바탕으로 추천드려요!
-              </p>
+              <p className="text-gray-700 mb-3">회원님의 완주 기록을 바탕으로 추천드려요!</p>
               <div className="grid md:grid-cols-2 gap-3">
                 {courses.filter(course => !completedCourses.includes(course.id)).slice(0, 2).map(course => (
                   <div key={course.id} className="bg-white p-3 rounded-lg border">
@@ -324,7 +326,7 @@ export function MyPage({
 
         {/* 탭 컨텐츠 */}
         <Tabs defaultValue="completed" className="space-y-6">
-          <TabsList className="grid grid-cols-6 w-full">
+          <TabsList className="grid grid-cols-3 lg:grid-cols-6 w-full">
             <TabsTrigger value="completed">완주 코스</TabsTrigger>
             <TabsTrigger value="favorites">찜한 코스</TabsTrigger>
             <TabsTrigger value="reviews">내 리뷰</TabsTrigger>
@@ -338,8 +340,7 @@ export function MyPage({
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
-                  <CheckCircle className="w-5 h-5 mr-2" />
-                  완주한 코스 ({completedCourses.length})
+                  <CheckCircle className="w-5 h-5 mr-2" /> 완주한 코스 ({completedCourses.length})
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -351,22 +352,15 @@ export function MyPage({
                   </div>
                 ) : (
                   <div className="space-y-6">
-                    {/* 완주 지도 */}
                     <div className="bg-gradient-to-br from-green-50 to-blue-50 p-6 rounded-lg">
                       <h4 className="font-semibold mb-3 flex items-center">
-                        <MapPin className="w-4 h-4 mr-2" />
-                        나만의 완주 지도
+                        <MapPin className="w-4 h-4 mr-2" /> 나만의 완주 지도
                       </h4>
-                      <div className="bg-white rounded-lg p-4 border-2 border-dashed border-green-300">
-                        <div className="text-center text-gray-600">
-                          <MapPin className="w-12 h-12 mx-auto mb-2 text-green-500" />
-                          <p>완주한 코스들이 지도에 표시됩니다</p>
-                          <p className="text-sm mt-1">실제 구현에서는 지도 API를 사용합니다</p>
-                        </div>
+                      <div className="bg-white rounded-lg p-4 border-2 border-dashed border-green-300 text-center text-gray-600">
+                        <MapPin className="w-12 h-12 mx-auto mb-2 text-green-500" />
+                        <p>완주한 코스들이 지도에 표시됩니다</p>
                       </div>
                     </div>
-
-                    {/* 완주 코스 목록 */}
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                       {completedCoursesData.map(course => (
                         <CourseCard
@@ -391,16 +385,14 @@ export function MyPage({
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
-                  <Heart className="w-5 h-5 mr-2" />
-                  찜한 코스 ({favoriteCourses.length})
+                  <Heart className="w-5 h-5 mr-2" /> 찜한 코스 ({favoriteCourses.length})
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {favoriteCourses.length === 0 ? (
                   <div className="text-center py-12 text-gray-500">
                     <Heart className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                    <p className="text-lg mb-2">찜한 코스가 없습니다</p>
-                    <p>마음에 드는 코스를 찜해보세요!</p>
+                    <p>찜한 코스가 없습니다</p>
                   </div>
                 ) : (
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -426,24 +418,21 @@ export function MyPage({
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
-                  <Star className="w-5 h-5 mr-2" />
-                  내가 작성한 리뷰 ({userReviews.length})
+                  <Star className="w-5 h-5 mr-2" /> 내가 작성한 리뷰 ({userReviews.length})
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {userReviews.length === 0 ? (
                   <div className="text-center py-12 text-gray-500">
                     <Star className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                    <p className="text-lg mb-2">작성한 리뷰가 없습니다</p>
-                    <p>완주한 코스에 대한 후기를 남겨보세요!</p>
+                    <p>작성한 리뷰가 없습니다</p>
                   </div>
                 ) : (
                   <div className="space-y-6">
                     {/* 나의 사진첩 */}
                     <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-lg">
                       <h4 className="font-semibold mb-3 flex items-center">
-                        <Camera className="w-4 h-4 mr-2" />
-                        나의 갈맷길 사진첩
+                        <Camera className="w-4 h-4 mr-2" /> 나의 갈맷길 사진첩
                       </h4>
                       <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
                         {userReviews.flatMap(review => review.photos).slice(0, 12).map((photo, index) => (
@@ -453,7 +442,6 @@ export function MyPage({
                         ))}
                       </div>
                     </div>
-
                     {/* 리뷰 목록 */}
                     <div className="space-y-4">
                       {userReviews.map(review => {
@@ -465,34 +453,14 @@ export function MyPage({
                                 <h4 className="font-medium">{course?.name}</h4>
                                 <div className="flex items-center space-x-2 mt-1">
                                   <div className="flex">{renderStars(review.rating)}</div>
-                                  <span className="text-sm text-gray-500">
-                                    {new Date(review.date).toLocaleDateString()}
-                                  </span>
+                                  <span className="text-sm text-gray-500">{formatDate(review.date)}</span>
                                 </div>
                               </div>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => course && onCourseClick(course)}
-                              >
+                              <Button variant="outline" size="sm" onClick={() => course && onCourseClick(course)}>
                                 코스 보기
                               </Button>
                             </div>
                             <p className="text-gray-700 mb-3">{review.content}</p>
-                            {review.photos.length > 0 && (
-                              <div className="flex space-x-2">
-                                {review.photos.slice(0, 3).map((photo, index) => (
-                                  <div key={index} className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
-                                    <Camera className="w-6 h-6 text-gray-400" />
-                                  </div>
-                                ))}
-                                {review.photos.length > 3 && (
-                                  <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center text-gray-500 text-sm">
-                                    +{review.photos.length - 3}
-                                  </div>
-                                )}
-                              </div>
-                            )}
                           </div>
                         );
                       })}
@@ -508,8 +476,7 @@ export function MyPage({
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
-                  <Target className="w-5 h-5 mr-2" />
-                  나의 도전과제
+                  <Target className="w-5 h-5 mr-2" /> 나의 도전과제
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -522,34 +489,20 @@ export function MyPage({
                             <Target className={`w-5 h-5 ${challenge.completed ? 'text-green-600' : 'text-blue-600'}`} />
                             {challenge.title}
                             {challenge.completed && (
-                              <Badge variant="secondary" className="bg-green-100 text-green-700">
-                                완료
-                              </Badge>
+                              <Badge variant="secondary" className="bg-green-100 text-green-700">완료</Badge>
                             )}
                           </CardTitle>
                         </div>
                         <p className="text-gray-600">{challenge.description}</p>
                       </CardHeader>
-                      
                       <CardContent className="space-y-4">
                         <div className="space-y-2">
                           <div className="flex justify-between text-sm">
                             <span>진행률</span>
-                            <span>
-                              {challenge.current}/{challenge.target}
-                              {challenge.category === 'distance' && 'km'}
-                            </span>
+                            <span>{challenge.current}/{challenge.target} {challenge.category === 'distance' && 'km'}</span>
                           </div>
-                          <div className="w-full bg-gray-200 rounded-full h-2">
-                            <div
-                              className={`h-2 rounded-full transition-all duration-300 ${
-                                challenge.completed ? 'bg-green-500' : 'bg-blue-500'
-                              }`}
-                              style={{ width: `${getProgressPercentage(challenge.current, challenge.target)}%` }}
-                            />
-                          </div>
+                          <Progress value={getProgressPercentage(challenge.current, challenge.target)} className="h-2" />
                         </div>
-                        
                         <div className="flex items-center gap-2 text-sm text-gray-600">
                           <Award className="w-4 h-4" />
                           <span>보상: {challenge.reward}</span>
@@ -562,17 +515,16 @@ export function MyPage({
             </Card>
           </TabsContent>
 
-          {/* 뱃지 */}
+          {/* 뱃지 (획득한 것만) */}
           <TabsContent value="badges">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
-                  <Trophy className="w-5 h-5 mr-2" />
-                  획득한 뱃지 ({badges.length})
+                  <Trophy className="w-5 h-5 mr-2" /> 획득한 뱃지 ({myBadges.length})
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {badges.length === 0 ? (
+                {myBadges.length === 0 ? (
                   <div className="text-center py-12 text-gray-500">
                     <Trophy className="w-16 h-16 mx-auto mb-4 text-gray-300" />
                     <p className="text-lg mb-2">획득한 뱃지가 없습니다</p>
@@ -580,15 +532,13 @@ export function MyPage({
                   </div>
                 ) : (
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {badges.map(badge => (
+                    {myBadges.map(badge => (
                       <Card key={badge.id} className={`border-2 ${getBadgeRarityColor(badge.rarity)}`}>
                         <CardContent className="p-6 text-center">
                           <div className="text-4xl mb-3">{badge.icon}</div>
                           <h4 className="font-bold mb-2">{badge.name}</h4>
                           <p className="text-sm text-gray-600 mb-3">{badge.description}</p>
-                          <Badge className={getBadgeRarityColor(badge.rarity)}>
-                            {badge.rarity}
-                          </Badge>
+                          <Badge className={getBadgeRarityColor(badge.rarity)}>{badge.rarity}</Badge>
                           <p className="text-xs text-gray-500 mt-2">{badge.condition}</p>
                         </CardContent>
                       </Card>
@@ -599,40 +549,39 @@ export function MyPage({
             </Card>
           </TabsContent>
 
-          {/* 뱃지 컬렉션 */}
+          {/* 뱃지 컬렉션 (전체 도감) */}
           <TabsContent value="collection">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
-                  <Medal className="w-5 h-5 mr-2" />
-                  뱃지 컬렉션
+                  <Medal className="w-5 h-5 mr-2" /> 뱃지 컬렉션 (도감)
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {badges.length === 0 ? (
-                  <div className="text-center py-12 text-gray-500">
-                    <Medal className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                    <p className="text-lg mb-2">아직 획득한 뱃지가 없습니다</p>
-                    <p className="text-sm mt-2">
-                      도전과제를 완료하여 뱃지를 획득해보세요!
-                    </p>
-                  </div>
+                {(allBadges || []).length === 0 ? (
+                  <div className="text-center py-12 text-gray-500">뱃지 정보를 불러오는 중입니다...</div>
                 ) : (
-                  <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-4">
-                    {badges.map((badge) => (
-                      <Card key={badge.id} className="text-center">
-                        <CardContent className="p-6">
-                          <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
-                            <Medal className="w-8 h-8 text-white" />
-                          </div>
-                          <h3 className="font-medium mb-2">{badge.name}</h3>
-                          <p className="text-sm text-gray-600 mb-3">{badge.description}</p>
-                          <Badge variant="secondary" className="text-xs">
-                            {formatDate((badge as any).earnedDate || new Date().toISOString())}
-                          </Badge>
-                        </CardContent>
-                      </Card>
-                    ))}
+                  <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4">
+                    {allBadges.map((badge) => {
+                      const isAcquired = myBadges.some(b => b.id === badge.id);
+                      return (
+                        <Card key={badge.id} className={`text-center transition-all ${isAcquired ? 'bg-white shadow-md' : 'bg-gray-50 opacity-60 grayscale'}`}>
+                          <CardContent className="p-6">
+                            <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
+                              {/* icon이 없으면 텍스트 아이콘 사용 */}
+                              <span className="text-2xl">{badge.icon || '🏅'}</span>
+                            </div>
+                            <h3 className="font-medium mb-2">{badge.name}</h3>
+                            <p className="text-sm text-gray-600 mb-3 line-clamp-2">{badge.description}</p>
+                            {isAcquired ? (
+                              <Badge className="bg-green-500 hover:bg-green-600">획득 완료!</Badge>
+                            ) : (
+                              <Badge variant="outline">미획득</Badge>
+                            )}
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
                   </div>
                 )}
               </CardContent>

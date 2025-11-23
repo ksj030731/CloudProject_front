@@ -1,48 +1,4 @@
-export interface CourseSection {
-  id: string;
-  name: string;
-  distance: number;
-  duration: string;
-  difficulty: '하' | '중' | '상';
-  start: string;
-  end: string;
-  checkpoints: string[];
-}
-
-export interface Course {
-  id: number;
-  name: string;
-  description: string;
-  distance: number;
-  duration: string;
-  difficulty: '하' | '중' | '상';
-  region: string;
-  image: string;
-  sections: CourseSection[];
-  route: {
-    start: string;
-    end: string;
-    checkpoints: string[];
-  };
-
-  facilities: {
-    restroom: boolean;
-    drinkingWater: boolean;
-    viewpoint: boolean;
-    parking: boolean;
-  };
-
-  transportation: string;
-  highlights: string[];
-  coordinates: {
-    lat: number;
-    lng: number;
-  };
-  completedCount: number;
-  lat: number;
-  lng: number;
-}
-
+// 1. 사용자 정보 (User)
 export interface User {
   id: number;
   email: string;
@@ -52,8 +8,22 @@ export interface User {
   totalDistance: number;
   completedCourses: number[];
   badges: Badge[];
+  picture?: string;
 }
 
+// 2. 뱃지 정보 (Badge)
+export interface Badge {
+  id: number;
+  name: string;
+  description: string;
+  icon?: string;
+  image?: string; 
+  condition?: string;
+  rarity?: string;
+  acquiredDate?: string;
+}
+
+// 3. 리뷰 정보 (Review)
 export interface Review {
   id: number;
   courseId: number;
@@ -66,74 +36,88 @@ export interface Review {
   likes: number;
 }
 
-export interface Badge {
-  id: number;
-  name: string;
-  description: string;
-  icon: string;
-  condition: string;
-  rarity: 'common' | 'rare' | 'epic' | 'legendary';
-}
-
-export interface Comment {
-  id: number;
-  reviewId: number;
-  userId: number;
-  userName: string;
-  content: string;
-  date: string;
-}
-
+// 4. 공지사항 정보 (Announcement) ✨ [추가됨]
 export interface Announcement {
   id: number;
   title: string;
   content: string;
   date: string;
   author: string;
-  category: 'notice' | 'event' | 'maintenance';
+  category: string;
 }
 
-export interface CourseCompletion {
+// 5. 코스 구간 정보 (CourseSection)
+export interface CourseSection {
+  sectionCode: string;
+  name: string;
+  distance: number;
+  duration: string;
+  difficulty: string;
+  startPoint: string; 
+  endPoint: string;
+  checkpoints: string[];
+  id?: string | number;
+  start?: string;
+  end?: string;
+}
+
+// 6. 코스 정보 (Course)
+export interface Course {
   id: number;
-  userId: number;
-  courseId: number;
-  completionTime: string; // HH:MM:SS 형식
-  date: string;
-  completionCount: number; // 해당 코스 완주 횟수
+  name: string;
+  description: string;
+  distance: number;
+  duration: string;
+  difficulty: string;
+  region: string;
+  image: string;
+  transportation: string;
+  facilities: {
+    restroom: boolean;
+    drinkingWater: boolean;
+    viewpoint: boolean;
+    parking: boolean;
+  };
+  highlights: string[];
+  sections: CourseSection[];
+  completedCount: number;
+  route?: {
+    start: string;
+    end: string;
+    checkpoints: string[];
+  };
+  coordinates?: { lat: number; lng: number };
 }
 
-export interface RankingEntry {
-  rank: number;
+// 7. 랭킹 관련 타입
+export interface UserRanking {
   userId: number;
   userName: string;
-  avatar?: string;
-  completionCount: number;
+  nickname?: string;
+  time?: string;
+  date?: string;
   bestTime?: string;
-  lastCompletionDate: string;
-  totalDistance: number;
-  badges: Badge[];
+  lastCompletionDate?: string;
+  totalDistance?: number;
+  totalCompletions?: number;
+  completionCount?: number;
+  completedCount?: number;
+  favoriteCourseName?: string;
+  specialBadges?: Badge[];
+  rank?: number;
 }
 
 export interface CourseRanking {
   courseId: number;
   courseName: string;
-  period: 'weekly' | 'monthly' | 'all-time';
-  rankings: RankingEntry[];
-  lastUpdated: string;
+  period?: string;
+  rankings?: UserRanking[]; 
+  topUsers?: UserRanking[];
+  lastUpdated?: string;
 }
 
 export interface GlobalRanking {
-  period: 'weekly' | 'monthly' | 'all-time';
-  rankings: {
-    rank: number;
-    userId: number;
-    userName: string;
-    avatar?: string;
-    totalCompletions: number;
-    totalDistance: number;
-    favoriteCourseName: string;
-    specialBadges: Badge[];
-    lastActivityDate: string;
-  }[];
+  period: string;
+  rankings: UserRanking[];
   lastUpdated: string;
 }
