@@ -2,7 +2,10 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { ImageWithFallback } from './figma/ImageWithFallback';
-import busanCityImage from '../img/introduce.png';
+import aboutImage1 from '../img/introduce.png';
+import aboutImage2 from '../img/introduce2.png';
+import aboutImage3 from '../img/introduce3.png';
+import aboutImage4 from '../img/introduce_map.png';
 import { 
   Calendar, 
   MapPin, 
@@ -15,13 +18,6 @@ import {
 } from 'lucide-react';
 
 export function About() {
-  const milestones = [
-    { year: '2007', event: '갈맷길 1코스 개설', icon: '🌟' },
-    { year: '2010', event: '10개 코스 완성', icon: '🏃‍♂️' },
-    { year: '2015', event: '전체 26개 코스 완성', icon: '🎯' },
-    { year: '2020', event: '디지털 인증 시스템 도입', icon: '📱' },
-    { year: '2024', event: '누적 방문객 100만명 돌파', icon: '🎉' }
-  ];
 
   const features = [
     {
@@ -61,8 +57,6 @@ export function About() {
           <h1 className="mb-6 text-4xl font-bold">갈맷길 이야기</h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
             부산의 아름다운 바다와 산, 문화를 걸으며 만나는 특별한 여행길.
-            갈맷길은 '길'을 뜻하는 '갈'과 바람을 뜻하는 '맷'이 합쳐진 이름으로,
-            부산의 바닷바람길을 따라 걷는 행복한 여정을 의미합니다.
           </p>
         </div>
 
@@ -70,40 +64,29 @@ export function About() {
         <div className="mb-16">
           <div className="relative rounded-2xl overflow-hidden">
             <ImageWithFallback
-              src={busanCityImage}
+              src={aboutImage1}
               alt="부산 갈맷길 - 도시철도와 해안 풍경"
-              className="w-full h-96 object-cover"
+              className="w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
-            <div className="absolute bottom-8 left-8 text-white">
-              <h3 className="text-2xl font-bold mb-2">부산의 숨은 보석을 찾아서</h3>
-              <p className="text-lg opacity-90">느린 걸음으로 만나는 부산의 진정한 아름다움</p>
-            </div>
           </div>
         </div>
 
         {/* 갈맷길의 의미 */}
         <div className="mb-16">
-          <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
+          <Card className="bg-gradient-to-br from-gray-50 to-indigo-50 border-gray-100">
             <CardContent className="p-8">
-              <div className="grid md:grid-cols-2 gap-8 items-center">
-                <div>
+              <div className="grid md:grid-cols-5 gap-8 items-center">
+                <div className="md:col-span-3">
                   <h2 className="text-3xl font-bold text-gray-900 mb-4">
                     갈맷길의 의미
                   </h2>
                   <div className="space-y-4 text-gray-700">
                     <div className="flex items-start space-x-3">
-                      <Badge className="bg-blue-100 text-blue-700 mt-1">갈</Badge>
+                      <Badge className="bg-blue-100 text-blue-700 mt-1">🌊</Badge>
                       <div>
-        				<p className="font-medium">순우리말로 '길'</p>
-                        <p className="text-sm">우리말로 표현한 길의 순수한 의미</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start space-x-3">
-                      <Badge className="bg-green-100 text-green-700 mt-1">맷</Badge>
-                      <div>
-                        <p className="font-medium">순우리말로 '바람'</p>
-                        <p className="text-sm">부산의 상징인 바닷바람이 함께하는 길</p>
+        				<p className="font-medium">부산갈맷길 이란?</p>
+                        <p className="text-sm">부산 지역 전역에 조성된 부산의 그린웨이를 지칭 ‘갈맷길’은 부산광역시 시민 공모를 통해 2009년 명칭으로 선정되었다.<br/>
+                            부산의 새인 ‘갈매기’와 ‘길’을 합성한 것으로 ‘갈매’는 순수 우리말로 ‘깊은 바다’라는 뜻 또한 가지고 있다.</p>
                       </div>
                     </div>
                   </div>
@@ -116,20 +99,78 @@ export function About() {
                     </p>
                   </div>
                 </div>
-                <div className="relative">
-                  <div className="w-64 h-64 mx-auto bg-gradient-to-br from-blue-400 to-green-400 rounded-full flex items-center justify-center relative overflow-hidden">
-                    <Waves className="w-32 h-32 text-white opacity-20 absolute" />
-                    <div className="text-center text-white z-10">
-                      <div className="text-4xl mb-2">🌊</div>
-                      <div className="text-lg font-bold">갈맷길</div>
-                      <div className="text-sm opacity-90">Galmaet-gil</div>
+                <div className="relative md:col-span-2">
+                    <div className="w-auto h-64 mx-auto overflow-hidden shadow-md border-1 border-white relative">
+                        <ImageWithFallback
+                            src={aboutImage2}
+                            alt={"갈맷길을 상징하는 아름다운 풍경"}
+                            className="w-full h-full object-cover"/>
                     </div>
-                  </div>
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
+
+          {/* 갈맷길 조성 개요*/}
+          <div className="mb-16">
+              <h2 className="text-center mb-6 text-3xl font-bold">갈맷길 조성 개요</h2>
+                  <Card className="bg-gradient-to-br from-gray-150 border-gray-150">
+                      <CardContent className="p-8">
+                          <div className="grid md:grid-cols-2 gap-8 items-center">
+                              <div className="md:col-span-1">
+                                  <div className="w-auto h-64 mx-auto overflow-hidden shadow-md border-1 border-white relative">
+                                      <ImageWithFallback
+                                          src={aboutImage3}
+                                          alt={"갈맷길을 상징하는 아름다운 풍경"}
+                                          className="w-full h-full object-cover"/>
+                                  </div>
+                              </div>
+
+                              <div className="relative md:col-span-1">
+                                  <div className="mt-6 p-4 text-right bg-gray-100 border-gray-100 rounded-lg">
+                                      <p className="text-lg font-semibold">그린웨이</p>
+                                      <p className="text-base mb-6">부산시는 2009년부터 집중적으로 걷기 좋은 탐방로 일명 그린웨이를 조성하였으며<br/>
+                                          기존 산책로 및 등산로를 활용했으나, 데크을 깔거나 새로이 조성한 길도 있었다</p>
+                                  </div>
+
+                                  <div className="mt-6 p-4 text-right bg-gray-100 border-gray-100 rounded-lg">
+                                      <p className="text-lg font-semibold">노선</p>
+                                      <p className="text-base">지형에 맞게 해안길, 숲길, 강변길, 도심길로구분(총 9코스). 사포지향(산, 바다, 강, 온천)<br/>
+                                          매력을 만끽할 수 있다. 2009년에서 2012년까지 갈맷길 20개 노선 263.8km가<br/>
+                                          정해졌고, 노선과 구간을 재정비하여 21개 구간 278.8km로 확대하여 운영하였고<br/>
+                                          1월부터는 기존 장거리 구간을 분할하는 등 이용객들이 더욱 쉽게 걸을 수 있도록<br/>
+                                          노선을 일부 개선하여 9코스 23개 노선으로 운영하고 있다</p>
+                                  </div>
+                              </div>
+                          </div>
+                      </CardContent>
+                  </Card>
+          </div>
+
+          {/*9개 코스 간단 설명*/}
+          <div className="container mx-auto px-4">
+              {/* 헤더 */}
+              <div className="text-center mb-6">
+                  <h1 className="mb-4 text-3xl font-bold">갈맷길 9개의 코스</h1>
+                  <p className="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed">
+                      갈맷길은 사포지향(바다, 강, 산, 온천)인 부산의 지역적 특성을 담고 있어 바닷가를 걷다보면 어느덧 산속이고, 산을 벗어나면 강이 있고,
+                      몸이 노곤하면 온천이 반겨주는 부산에만 있는 길이다.
+                      9개 코스 23개 구간으로 나누어지며 총 연장은 278.8㎞이다. 9개 코스를 모두 완보하려면 어른 걸음으로 약 91시간이 걸린다.
+                  </p>
+              </div>
+
+              {/* 소개 지도 */}
+              <div className="mb-16">
+                  <div className="relative rounded-2xl overflow-hidden">
+                      <ImageWithFallback
+                          src={aboutImage4}
+                          alt="갈맷길 전체 코스 지도"
+                          className="w-full h-full object-cover"
+                      />
+                  </div>
+              </div>
+          </div>
 
         {/* 주요 특징 */}
         <div className="mb-16">
@@ -176,71 +217,6 @@ export function About() {
           </Card>
         </div>
 
-        {/* 역사 */}
-        <div className="mb-16">
-          <h2 className="text-center mb-12 text-2xl font-bold">갈맷길의 역사</h2>
-          <Card>
-            <CardContent className="p-8">
-              <div className="space-y-8">
-                {milestones.map((milestone, index) => (
-                  <div key={index} className="flex items-start space-x-4">
-                    <div className="flex-shrink-0">
-                      <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                        <span className="text-xl">{milestone.icon}</span>
-                      </div>
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-2">
-                        <Badge variant="outline" className="text-blue-600 border-blue-600">
-                          {milestone.year}
-                        </Badge>
-                        <Calendar className="w-4 h-4 text-gray-400" />
-                      </div>
-                      <h3 className="font-semibold text-gray-900">{milestone.event}</h3>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* 비전 */}
-        <div className="mb-16">
-          <Card className="bg-gradient-to-br from-green-50 to-blue-50 border-green-200">
-            <CardContent className="p-8 text-center">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">우리의 비전</h2>
-              <div className="max-w-3xl mx-auto space-y-6">
-                <p className="text-lg text-gray-700 leading-relaxed">
-                  갈맷길은 단순한 트레킹 코스를 넘어, 부산의 자연과 문화를 보존하고 
-                  지속가능한 관광 문화를 만들어가는 플랫폼입니다.
-                </p>
-                <p className="text-lg text-gray-700 leading-relaxed">
-                  모든 사람이 부산의 아름다움을 느끼고, 자연과 함께하는 건강한 라이프스타일을 
-                  실천할 수 있도록 지원하겠습니다.
-                </p>
-                <div className="grid md:grid-cols-3 gap-6 mt-8">
-                  <div className="text-center">
-                    <div className="text-3xl mb-2">🌱</div>
-                    <h4 className="font-semibold mb-1">환경 보호</h4>
-                    <p className="text-sm text-gray-600">자연을 보호하는 지속가능한 관광</p>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-3xl mb-2">🤝</div>
-                    <h4 className="font-semibold mb-1">지역 상생</h4>
-                    <p className="text-sm text-gray-600">지역 경제 활성화와 문화 보존</p>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-3xl mb-2">💚</div>
-                    <h4 className="font-semibold mb-1">웰빙 라이프</h4>
-                    <p className="text-sm text-gray-600">건강하고 행복한 삶의 추구</p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
         {/* 연락처 정보 */}
         <Card>
           <CardHeader>
@@ -253,7 +229,7 @@ export function About() {
                   <MapPin className="w-5 h-5 text-blue-600" />
                   <div>
                     <p className="font-medium">주소</p>
-                    <p className="text-gray-600">부산광역시 중구 중앙대로 63</p>
+                    <p className="text-gray-600">부산광역시 부산진구 엄광로 176 동의대학교 정보공학관(건물번호 23번) 9층</p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-3">
@@ -262,7 +238,7 @@ export function About() {
                   </div>
                   <div>
                     <p className="font-medium">전화번호</p>
-                    <p className="text-gray-600">064-740-6000</p>
+                    <p className="text-gray-600">010-2716-0371</p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-3">
@@ -271,7 +247,7 @@ export function About() {
                   </div>
                   <div>
                     <p className="font-medium">이메일</p>
-                    <p className="text-gray-600">info@galmaetgil.co.kr</p>
+                    <p className="text-gray-600">20223058@office.deu.ac.kr</p>
                   </div>
                 </div>
               </div>
@@ -291,7 +267,7 @@ export function About() {
                   </div>
                   <div>
                     <p className="font-medium">홈페이지</p>
-                    <p className="text-gray-600">www.galmaetgil.co.kr</p>
+                    <p className="text-gray-600">my-cloud-project2222.duckdns.org</p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-3">
@@ -300,7 +276,7 @@ export function About() {
                   </div>
                   <div>
                     <p className="font-medium">모바일 앱</p>
-                    <p className="text-gray-600">App Store, Google Play에서 다운로드</p>
+                    <p className="text-gray-600">출시 준비 중</p>
                   </div>
                 </div>
               </div>

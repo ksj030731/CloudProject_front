@@ -19,7 +19,16 @@ export function CourseGrid({
   onFavoriteClick,
   currentUser 
 }: CourseGridProps) {
-  return (
+
+    //courses가 배열일 때만 받기 (계속 로딩 중으로 나오면 삭제하면 됨)
+    if(!courses || !Array.isArray(courses)){
+        return <div className="p-4 text-center">로딩 중</div>;
+    }
+    if(courses.length === 0){
+        return <div className="p-4 text-center">빈 배열</div>;
+    }
+
+    return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {courses.map(course => (
         <CourseCard
