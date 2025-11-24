@@ -32,17 +32,18 @@ export function BadgeModal({ isOpen, badge, onClose }: BadgeModalProps) {
 
   if (!badge) return null;
 
-  const getBadgeRarityColor = (rarity: string) => {
+  const getBadgeRarityColor = (rarity?: string) => {
     switch (rarity) {
       case 'common': return 'from-gray-400 to-gray-600';
       case 'rare': return 'from-blue-400 to-blue-600';
       case 'epic': return 'from-purple-400 to-purple-600';
       case 'legendary': return 'from-yellow-400 to-yellow-600';
-      default: return 'from-gray-400 to-gray-600';
+      default: return 'from-gray-400 to-gray-600'; // undefined일 경우 여기서 처리됨
     }
   };
 
-  const getBadgeRarityBorder = (rarity: string) => {
+  // ✨ [수정 2] rarity?: string
+  const getBadgeRarityBorder = (rarity?: string) => {
     switch (rarity) {
       case 'common': return 'border-gray-300';
       case 'rare': return 'border-blue-300';
@@ -52,7 +53,8 @@ export function BadgeModal({ isOpen, badge, onClose }: BadgeModalProps) {
     }
   };
 
-  const getBadgeRarityText = (rarity: string) => {
+  // ✨ [수정 3] rarity?: string
+  const getBadgeRarityText = (rarity?: string) => {
     switch (rarity) {
       case 'common': return '일반';
       case 'rare': return '희귀';

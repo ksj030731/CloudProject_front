@@ -12,7 +12,7 @@ interface AuthModalProps {
   isOpen: boolean;
   mode: 'login' | 'signup';
   onClose: () => void;
-  onSubmit: (email: string, password: string, nickname?: string, region?: string) => void;
+  onLoginSuccess: () => void; // 로그인 성공 시 호출할 부모 함수
   onModeChange: (mode: 'login' | 'signup') => void;
 }
 
@@ -20,9 +20,10 @@ export function AuthModal({
   isOpen, 
   mode, 
   onClose, 
-  onSubmit, 
+  onLoginSuccess, 
   onModeChange 
 }: AuthModalProps) {
+  // 상태 관리
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -30,6 +31,7 @@ export function AuthModal({
   const [region, setRegion] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // 로딩 상태 추가
 
   const regions = [
     '중구', '서구', '동구', '영도구', '부산진구', '동래구',
@@ -37,6 +39,7 @@ export function AuthModal({
     '연제구', '수영구', '사상구', '기장군'
   ];
 
+  // 폼 초기화
   const resetForm = () => {
     setEmail('');
     setPassword('');
@@ -50,49 +53,118 @@ export function AuthModal({
     onClose();
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault(); 
-    
-    if (mode === 'signup') {
-      if (password !== confirmPassword) {
-        toast.error('비밀번호가 일치하지 않습니다.');
-        return;
+  // --- [핵심] 1. 로그인 처리 함수 ---
+  const handleLogin = async () => {
+    setIsLoading(true);
+    try {
+       const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        
+        // 👇 [중요] 이 줄을 추가해야 브라우저가 세션 쿠키를 저장합니다!
+        credentials: 'include', 
+        
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          username: email, 
+          password: password 
+        }),
+      });
+
+      if (response.ok) {
+        const token = await response.text(); 
+        localStorage.setItem('authToken', token);
+        toast.success('로그인되었습니다!');
+        onLoginSuccess(); // 부모 컴포넌트에 성공 알림 (유저 정보 갱신 등)
+        handleClose();    // 모달 닫기
+      } else {
+        // 실패 시 메시지 출력
+        const message = await response.text(); // 백엔드에서 보낸 에러 메시지
+        toast.error(`로그인 실패: ${message}`);
       }
-      if (!nickname || !region) {
-        toast.error('모든 정보를 입력해주세요.');
-        return;
-      }
-      // 회원가입 요청 -> 성공 시 App.tsx에서 처리 후 모달 닫힘
-      onSubmit(email, password, nickname, region);
-    } else {
-      // 로그인 요청 -> 성공 시 App.tsx에서 처리 후 모달 닫힘
-      onSubmit(email, password);
+    } catch (error) {
+      console.error('Login Error:', error);
+      toast.error('서버와 통신 중 오류가 발생했습니다.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  // --- [핵심] 2. 회원가입 처리 함수 ---
+  const handleSignup = async () => {
+    // 유효성 검사
+    if (password !== confirmPassword) {
+      toast.error('비밀번호가 일치하지 않습니다.');
+      return;
+    }
+    if (!nickname || !region) {
+      toast.error('닉네임과 지역을 모두 입력해주세요.');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: email, // 백엔드 DTO 필드명에 맞춤
+          password: password,
+          email: email,
+          nickname: nickname,
+          region: region
+        }),
+      });
+
+      if (response.ok) {
+        toast.success('회원가입 성공! 이제 로그인해주세요.');
+        onModeChange('login'); // 로그인 탭으로 자동 이동
+        resetForm(); // 입력창 비우기
+      } else {
+        const message = await response.text();
+        toast.error(`회원가입 실패: ${message}`);
+      }
+    } catch (error) {
+      console.error('Signup Error:', error);
+      toast.error('회원가입 중 오류가 발생했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 폼 제출 핸들러
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (mode === 'login') {
+      handleLogin();
+    } else {
+      handleSignup();
+    }
+  };
+
+  // 탭 변경 핸들러
   const handleTabChange = (value: string) => {
     onModeChange(value as 'login' | 'signup');
   };
 
-  // 소셜 로그인 버튼 컴포넌트 (재사용)
+  // 소셜 로그인 버튼 (재사용)
   const SocialLoginButtons = () => (
     <div className="space-y-2">
+      {/* 카카오 */}
       <Button asChild variant="outline" className="w-full bg-[#FEE500] hover:bg-[#FEE500]/90 text-black border-none h-10">
         <a href="https://my-cloud-project2222.duckdns.org/oauth2/authorization/kakao" className="flex items-center justify-center w-full">
-          <span className="mr-2 text-lg">💬</span>
-          카카오로 시작하기
+          <span className="mr-2 text-lg">💬</span> 카카오로 시작하기
         </a>
       </Button>
+      {/* 네이버 */}
       <Button asChild variant="outline" className="w-full bg-[#03C75A] hover:bg-[#03C75A]/90 text-white border-none h-10">
         <a href="https://my-cloud-project2222.duckdns.org/oauth2/authorization/naver" className="flex items-center justify-center w-full">
-          <span className="mr-2 font-bold text-lg">N</span>
-          네이버로 시작하기
+          <span className="mr-2 font-bold text-lg">N</span> 네이버로 시작하기
         </a>
       </Button>
+      {/* 구글 */}
       <Button asChild variant="outline" className="w-full bg-white hover:bg-gray-50 text-black border border-gray-300 h-10">
         <a href="https://my-cloud-project2222.duckdns.org/oauth2/authorization/google" className="flex items-center justify-center w-full">
-          <span className="mr-2 font-bold text-lg">G</span>
-          구글로 시작하기
+          <span className="mr-2 font-bold text-lg">G</span> 구글로 시작하기
         </a>
       </Button>
     </div>
@@ -151,8 +223,8 @@ export function AuthModal({
                   </Button>
                 </div>
               </div>
-              <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 h-10">
-                로그인
+              <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 h-10" disabled={isLoading}>
+                {isLoading ? '로그인 중...' : '로그인'}
               </Button>
             </form>
 
@@ -198,7 +270,7 @@ export function AuthModal({
                   <SelectTrigger id="region">
                     <SelectValue placeholder="지역 선택" />
                   </SelectTrigger>
-                  <SelectContent className="max-h-[200px] overflow-y-auto"> {/* ✨ 스크롤 추가 */}
+                  <SelectContent className="max-h-[200px] overflow-y-auto">
                     {regions.map((r) => (
                       <SelectItem key={r} value={r}>{r}</SelectItem>
                     ))}
@@ -248,8 +320,8 @@ export function AuthModal({
                 </div>
               </div>
               
-              <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 h-10">
-                회원가입
+              <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 h-10" disabled={isLoading}>
+                {isLoading ? '가입 처리 중...' : '회원가입'}
               </Button>
             </form>
 

@@ -13,6 +13,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Textarea } from './ui/textarea';
 import { Label } from './ui/label';
+import axios from 'axios';
+import { toast } from 'sonner';
 
 interface CommunityProps {
   courses: Course[];
@@ -93,24 +95,59 @@ export function Community({
     );
   };
 
-  const handleSubmitReview = () => {
-    if (!currentUser || !newReview.courseId || !newReview.content.trim()) return;
-    const review: CommunityReview = {
-      id: Date.now(),
-      userId: currentUser.id,
-      userName: currentUser.nickname,
-      courseId: newReview.courseId,
-      rating: newReview.rating,
-      content: newReview.content.trim(),
-      date: new Date().toISOString(),
-      likes: 0,
-      comments: [],
-      liked: false,
-      photos: []
-    };
-    setCommunityReviews(prev => [review, ...prev]);
-    setIsWriteModalOpen(false);
-    setNewReview({ courseId: 0, rating: 5, content: '' });
+  // --- [수정됨] 리뷰 작성 및 DB 저장 함수 ---
+  const handleSubmitReview = async () => {
+    // 1. 유효성 검사
+    if (!currentUser) {
+        toast.error("로그인이 필요합니다.");
+        return;
+    }
+    if (!newReview.courseId) {
+        toast.error("코스를 선택해주세요.");
+        return;
+    }
+    if (!newReview.content.trim()) {
+        toast.error("내용을 입력해주세요.");
+        return;
+    }
+
+    try {
+      // 2. 백엔드로 보낼 데이터 준비 (ReviewRequest DTO 형식)
+      // 주의: userName은 DTO에 없다면 제외해도 되지만, 필요하다면 포함하세요.
+      const requestData = {
+        courseId: newReview.courseId,
+        userId: currentUser.id,
+        userName: currentUser.nickname, // (선택) 백엔드 DTO에 이 필드가 있다면 포함
+        rating: newReview.rating,
+        content: newReview.content.trim()
+      };
+
+      // 3. 백엔드 API 호출 (POST /api/reviews)
+      const response = await axios.post('/api/reviews', requestData);
+
+      // 4. 성공 시 처리
+      if (response.status === 201 || response.status === 200) {
+        const savedReview = response.data; // DB에 저장된 실제 리뷰 데이터(ID 포함)
+
+        // 5. 화면 목록 즉시 업데이트 (새로고침 없이 바로 보이게)
+        // 백엔드 응답 데이터에는 comments, liked 필드가 없으므로 초기값 추가
+        const newCommunityReview: CommunityReview = {
+          ...savedReview,
+          comments: [], // 새 글이니 댓글 없음
+          liked: false  // 새 글이니 좋아요 안 누른 상태
+        };
+
+        setCommunityReviews(prev => [newCommunityReview, ...prev]);
+        
+        // 6. 모달 닫기 및 초기화
+        setIsWriteModalOpen(false);
+        setNewReview({ courseId: 0, rating: 5, content: '' });
+        toast.success("리뷰가 등록되었습니다!");
+      }
+    } catch (error) {
+      console.error("리뷰 저장 실패:", error);
+      toast.error("리뷰 등록 중 오류가 발생했습니다.");
+    }
   };
 
   const formatDate = (dateString: string) => {

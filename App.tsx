@@ -65,10 +65,60 @@ export default function App() {
   const [completedCourses, setCompletedCourses] = useState<number[]>([]);
   const [myBadges, setMyBadges] = useState<Badge[]>([]); 
 
-  // 5. 데이터 페칭
+
+  // 5. 유저 정보 가져오기 (토큰 기반) 
+  const fetchUserWithToken = async (token?: string) => {
+    // 로컬 스토리지에 토큰 글자가 없어도 일단 진행합니다. (쿠키를 믿습니다!)
+    const authToken = token || localStorage.getItem('authToken');
+
+    try {
+      // 👇 authToken이 없어도 요청을 보냅니다. (쿠키가 있으면 성공할 것이므로)
+      const response = await axios.get('/api/user/me', { 
+        headers: authToken ? { 'Authorization': `Bearer ${authToken}` } : {}, // 있으면 보내고, 없으면 맘
+        withCredentials: true // ✨ 이게 진짜 열쇠입니다
+      });
+      
+      const userData: User = response.data;
+      setCurrentUser(userData);
+      setCompletedCourses(userData.completedCourses || []);
+      setMyBadges(userData.badges || []);
+      
+      // 만약 로컬 스토리지가 비어있었다면, 다시 채워주는 센스 (선택 사항)
+      if (!localStorage.getItem('authToken')) {
+         localStorage.setItem('authToken', 'logged-in'); 
+      }
+
+      if (window.location.pathname === '/auth/callback') {
+          window.history.replaceState({}, '', '/'); 
+      }
+
+    } catch (error) {
+      // 진짜로 실패했을 때만 로그아웃 처리
+      console.error("유저 정보 로드 실패 (로그인 안 된 상태):", error);
+      localStorage.removeItem('authToken');
+      setCurrentUser(null);
+    }
+};
+
+  // 6. [통합] 초기화 로직 (데이터 페칭 + 인증 및 라우팅)
   useEffect(() => {
-    const fetchAllData = async () => {
+    const initializeApp = async () => {
       try {
+        // --- [단계 1] 인증 체크 (로그인 시도) ---
+        const urlToken = new URLSearchParams(window.location.search).get('token');
+        const localToken = localStorage.getItem('authToken');
+        
+        if (urlToken) {
+           // 소셜 로그인 직후: URL 토큰 우선 사용
+           localStorage.setItem('authToken', urlToken);
+           await fetchUserWithToken(urlToken);
+        } else if (localToken) {
+           // 일반 접속: 로컬 스토리지 토큰 사용
+           await fetchUserWithToken(localToken);
+        }
+
+        // --- [단계 2] 공통 데이터 로드 (병렬 처리) ---
+        // 로그인이 안 되어도 데이터는 보여야 하므로, 인증 실패 여부와 상관없이 실행합니다.
         const [coursesRes, reviewsRes, announcementsRes, badgesRes, courseRankingRes, globalRankingRes] = await Promise.all([
           axios.get('/api/courses'),
           axios.get('/api/reviews'),
@@ -86,75 +136,32 @@ export default function App() {
         setGlobalRanking(globalRankingRes.data);
 
       } catch (error) {
-        console.error("데이터 로딩 실패:", error);
-      }
-    };
-
-    fetchAllData();
-  }, []);
-
-  // 6. 인증 및 라우팅
-  useEffect(() => {
-    const handleRouting = async () => {
-      try {
+        console.error("초기 데이터 로딩 실패:", error);
+        // 필요시 에러 토스트 메시지 추가
+      } finally {
+        // --- [단계 3] 모든 로딩 종료 후 화면 결정 ---
         const path = window.location.pathname;
-        const token = new URLSearchParams(window.location.search).get('token');
-
-        if (path === '/auth/callback' && token) {
-          setCurrentPage('authCallback');
-          localStorage.setItem('authToken', token);
-          await fetchUserWithToken(token);
-        } else if (path === '/register-social' && token) {
-          setCurrentPage('registerSocial');
+        
+        if (path === '/auth/callback') {
+            setCurrentPage('home'); // 인증 처리 끝났으니 홈으로
+        } else if (path === '/register-social') {
+            setCurrentPage('registerSocial');
         } else {
-          const existingToken = localStorage.getItem('authToken');
-          if (existingToken) {
-            await fetchUserWithToken(existingToken);
-          } else {
-            setCurrentPage('home');
-          }
+            // 기존 페이지 유지 (새로고침 시) 또는 홈으로
+            // 여기서는 간단하게 홈으로 보냅니다. 
+            // (만약 '/courses' 같은 경로를 유지하고 싶다면 window.location.pathname을 활용하세요)
+            setCurrentPage('home'); 
         }
-      } catch (error) {
-        setCurrentPage('home');
+        
+        // 여기서 로딩 상태를 풀어줍니다. (이제 데이터와 유저 정보가 다 있음)
+        // setCurrentPage가 'loading'이 아니게 되므로 화면이 렌더링됨
       }
     };
-    handleRouting();
+
+    initializeApp();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const fetchUserWithToken = async (token: string) => {
-    try {
-      const response = await axios.get('/api/me', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const userData: User = response.data;
-      setCurrentUser(userData);
-      setCompletedCourses(userData.completedCourses || []);
-      setMyBadges(userData.badges || []);
-      setCurrentPage('home');
-      window.history.replaceState({}, '', '/'); 
-    } catch (error) {
-      localStorage.removeItem('authToken');
-      setCurrentUser(null);
-      setCurrentPage('home');
-    }
-  };
-
-  const handleAuth = (email: string, password: string, nickname?: string, region?: string) => {
-    if (authMode === 'signup' && nickname && region) {
-      toast.success('회원가입이 완료되었습니다!');
-    } else {
-      const user: User = { 
-        id: 1, email, nickname: nickname || '갈맷길러', region: region || '부산진구', 
-        joinDate: '2024-01-01T00:00:00Z', totalDistance: 125.5, 
-        completedCourses: [1, 3, 5], badges: [] 
-      };
-      setCurrentUser(user);
-      setCompletedCourses(user.completedCourses);
-      setMyBadges(user.badges);
-      toast.success('로그인되었습니다!');
-    }
-    setIsAuthModalOpen(false);
-  };
+  // --- 핸들러 함수들 ---
 
   const handleLogout = () => {
     localStorage.removeItem('authToken');
@@ -168,19 +175,23 @@ export default function App() {
 
   const handleReviewSubmit = async (rating: number, content: string, photos: File[]) => {
     if (!currentUser || !selectedCourse) return;
+    
     const reviewData = {
       courseId: selectedCourse.id,
       userId: currentUser.id,
-      userName: currentUser.nickname,
+      userName: currentUser.nickname, // 백엔드에서 User정보로 처리하지만 DTO 맞춤
       rating,
       content,
     };
+
     try {
+      // 사진 업로드 로직이 있다면 FormData 사용 필요 (현재는 JSON 전송 가정)
       const response = await axios.post('/api/reviews', reviewData);
       setReviews(prev => [response.data, ...prev]);
       setIsReviewModalOpen(false);
       toast.success('리뷰가 작성되었습니다!');
     } catch (error) {
+      console.error(error);
       toast.error('리뷰 작성에 실패했습니다.');
     }
   };
@@ -188,31 +199,39 @@ export default function App() {
   const openCourseDetail = async (course: Course) => {
     setSelectedCourse(course); 
     try {
-      const response = await fetch(`/api/courses/${course.id}`);
-      if (response.ok) {
-        const detailData = await response.json();
-        setSelectedCourse(detailData);
+      const response = await axios.get(`/api/courses/${course.id}`);
+      if (response.status === 200) {
+        setSelectedCourse(response.data);
       }
     } catch (error) {
-      console.error("상세 정보 로딩 실패");
+      console.error("상세 정보 로딩 실패", error);
     }
   };
 
   const closeCourseDetail = () => setSelectedCourse(null);
 
   const toggleFavorite = (courseId: number) => {
-    if (!currentUser) { toast.error('로그인이 필요합니다.'); return; }
+    if (!currentUser) { 
+        toast.error('로그인이 필요합니다.'); 
+        openAuth('login'); // 로그인 모달 띄우기
+        return; 
+    }
+    // TODO: 백엔드에 찜하기 API 연동 필요 (현재는 프론트 상태만 변경)
     setFavorites(prev => prev.includes(courseId) ? prev.filter(id => id !== courseId) : [...prev, courseId]);
     toast.success(!favorites.includes(courseId) ? '찜했습니다!' : '찜 해제했습니다.');
   };
 
   const handleQRScan = () => {
     if (!currentUser || !selectedCourse) return;
+    
     if (!completedCourses.includes(selectedCourse.id)) {
+      // TODO: 백엔드 완주 API 호출 필요
       const newCompleted = [...completedCourses, selectedCourse.id];
       setCompletedCourses(newCompleted);
+      
       const newTotalDistance = (currentUser.totalDistance || 0) + selectedCourse.distance;
       setCurrentUser({ ...currentUser, totalDistance: newTotalDistance });
+      
       toast.success(`${selectedCourse.name} 완주 인증이 완료되었습니다!`);
       checkForNewBadges(newCompleted.length, newTotalDistance);
     } else {
@@ -223,10 +242,12 @@ export default function App() {
 
   const checkForNewBadges = (completedCount: number, totalDistance: number) => {
     const newBadgesFound: Badge[] = [];
+    // 예시 로직: 첫 완주 뱃지
     if (completedCount === 1) {
       const badge = mockBadges.find(b => b.id === 1);
       if (badge && !myBadges.find(b => b.id === badge.id)) newBadgesFound.push(badge);
     }
+    // 뱃지 획득 시 모달 표시
     if (newBadgesFound.length > 0) {
       setMyBadges(prev => [...prev, ...newBadgesFound]);
       setNewBadge(newBadgesFound[0]);
@@ -239,12 +260,16 @@ export default function App() {
     setIsAuthModalOpen(true);
   };
 
+  // --- 렌더링 ---
+
   return (
     <div className="min-h-screen bg-white">
+      {/* 헤더 (로딩중이거나 소셜 처리중일 땐 숨김 가능) */}
       {currentPage !== 'loading' && currentPage !== 'authCallback' && currentPage !== 'registerSocial' && (
         <Header currentUser={currentUser} currentPage={currentPage} onPageChange={setCurrentPage} onAuthClick={openAuth} onLogout={handleLogout} />
       )}
       
+      {/* 로딩 화면 */}
       {currentPage === 'loading' && (
         <div className="flex items-center justify-center min-h-screen flex-col gap-4">
           <div className="w-16 h-16 border-8 border-blue-500 border-t-transparent border-solid rounded-full animate-spin"></div>
@@ -252,9 +277,11 @@ export default function App() {
         </div>
       )}
       
+      {/* 소셜 로그인 처리 페이지 */}
       {currentPage === 'authCallback' && <AuthCallback />}
       {currentPage === 'registerSocial' && <RegisterSocial />}
 
+      {/* 메인 페이지들 */}
       {currentPage === 'home' && (
         <>
           <Hero onAuthClick={openAuth} />
@@ -279,7 +306,6 @@ export default function App() {
       {currentPage === 'map' && ( <MapSection courses={courses} favorites={favorites} completedCourses={completedCourses} onCourseClick={openCourseDetail} onFavoriteClick={toggleFavorite} currentUser={currentUser} /> )}
       {currentPage === 'about' && <About />}
       
-      {/* ✨ [수정됨] Community에 필요한 모든 데이터를 넘겨줌 (에러 해결) */}
       {currentPage === 'community' && (
         <Community
           courses={courses}
@@ -288,7 +314,6 @@ export default function App() {
           badges={myBadges}
           completedCourses={completedCourses}
           onCourseClick={openCourseDetail}
-          // 👇 아래 3개가 추가되어야 ts(2741) 에러가 사라짐
           announcements={announcements} 
           courseRankings={courseRankings}
           globalRanking={globalRanking}
@@ -301,6 +326,7 @@ export default function App() {
 
       {currentPage === 'admin' && ( <AdminPage courses={courses} onCoursesUpdate={setCourses} /> )}
 
+      {/* 모달 컴포넌트들 */}
       {selectedCourse && (
         <CourseDetail
           course={selectedCourse}
@@ -315,7 +341,18 @@ export default function App() {
         />
       )}
 
-      <AuthModal isOpen={isAuthModalOpen} mode={authMode} onClose={() => setIsAuthModalOpen(false)} onSubmit={handleAuth} onModeChange={setAuthMode} />
+      {/* ✨ [중요] AuthModal 연결 수정 
+        - onSubmit 제거
+        - onLoginSuccess 추가: 로그인 성공 시 fetchUserWithToken 호출하여 유저 상태 갱신
+      */}
+      <AuthModal 
+        isOpen={isAuthModalOpen} 
+        mode={authMode} 
+        onClose={() => setIsAuthModalOpen(false)} 
+        onLoginSuccess={() => fetchUserWithToken()} // 인자 없이 호출하면 localStorage 토큰 사용
+        onModeChange={setAuthMode} 
+      />
+
       <ReviewModal isOpen={isReviewModalOpen} courseName={selectedCourse?.name || ''} onClose={() => setIsReviewModalOpen(false)} onSubmit={handleReviewSubmit} />
       <QRScanModal isOpen={isQRScanModalOpen} courseName={selectedCourse?.name || ''} onClose={() => setIsQRScanModalOpen(false)} onScan={handleQRScan} />
       <BadgeModal isOpen={isBadgeModalOpen} badge={newBadge} onClose={() => setIsBadgeModalOpen(false)} />
