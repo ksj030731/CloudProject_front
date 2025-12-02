@@ -1,0 +1,42 @@
+name: Frontend Deploy
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      # ----------------------------------------------------------------
+      # [수정됨] 리액트 빌드하기
+      # 사진을 보니 최상위에 파일들이 있어서 폴더 이동이 필요 없습니다.
+      # ----------------------------------------------------------------
+      - name: Install and Build
+        run: |
+          npm install
+          npm run build
+
+      # ----------------------------------------------------------------
+      # [수정됨] 서버로 전송하기
+      # source: "dist/*" (최상위 dist 폴더의 내용물)
+      # strip_components: 1 (dist 라는 껍데기 1개만 벗김)
+      # ----------------------------------------------------------------
+      - name: Deploy to Ncloud
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.KEY }}
+          port: 22
+          source: "dist/*"        # 수정됨: 앞에 frontend/ 가 빠짐
+          target: "/var/www/html"
+          strip_components: 1     # 수정됨: 2에서 1로 변경

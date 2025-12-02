@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -21,7 +22,8 @@ import {
   Target,
   Award,
   TrendingUp,
-  Medal
+  Medal,
+  Loader2
 } from 'lucide-react';
 // 타입 Badge는 이름 충돌 방지를 위해 BadgeType으로 별칭 사용
 import { User as UserType, Course, Review, Badge as BadgeType } from '../types';
@@ -49,8 +51,6 @@ interface MyPageProps {
   completedCourses: number[];
   onCourseClick: (course: Course) => void;
   onUserUpdate: (user: UserType) => void;
-  
-  // ✨ [추가] 전체 뱃지 목록 (도감용)
   allBadges: BadgeType[]; 
 }
 
@@ -67,6 +67,8 @@ export function MyPage({
 }: MyPageProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedUser, setEditedUser] = useState(user);
+
+  const[isSaving , setIsSaving] = useState(false);
 
   const favoriteCourses = courses.filter(course => favorites.includes(course.id));
   const userReviews = reviews.filter(review => review.userId === user.id);
@@ -129,12 +131,42 @@ export function MyPage({
     }
   ];
 
-  const handleSave = () => {
-    onUserUpdate(editedUser);
-    setIsEditing(false);
-    toast.success('프로필이 업데이트되었습니다!');
+  //프로필 정보를 수정하는 메서드 
+  const handleSave = async () => {
+    //유효성 검사 
+    if(!editedUser.nickname.trim()){
+      toast.error('닉네임을 입력해주세요.');
+      return ;
+    }
+    try{
+      setIsSaving(true); //로딩 시작 
+      
+      //백앤드로 api/user/me (PUT 요청)
+      const response = await axios.put('api/user/me',{
+        nickname : editedUser.nickname,
+        region : editedUser.region,
+        //필요하면 프로필 이미지 변경 로직 추가 
+      },{
+        withCredentials : true
+      });
+
+      //성공 시 : q부모 컴포넌트(App.tsx)의 상태 업데이트 
+      //백앤드에서 수정된 최신 User객체(response)를 반환해줌 
+
+      const updatedUser = response.data;
+      onUserUpdate(updatedUser);
+
+      setIsEditing(false);
+      toast.success('프로필이 성공적으로 업데이트되었습니다!');
+    }catch(error){
+      console.error("프로필 수정 실패",error);
+      toast.error('정보 수정에 실패했습니다. 잠시 후 다시 시도해주세요.');
+    }finally{
+      setIsSaving(false);
+    }
   };
 
+  //Cancel하면 user객체를 그대로 업데이트함 
   const handleCancel = () => {
     setEditedUser(user);
     setIsEditing(false);
@@ -199,6 +231,7 @@ export function MyPage({
                           id="nickname"
                           value={editedUser.nickname}
                           onChange={(e) => setEditedUser({ ...editedUser, nickname: e.target.value })}
+                          disabled = {isSaving}
                         />
                       </div>
                       <div>
@@ -207,15 +240,26 @@ export function MyPage({
                           id="region"
                           value={editedUser.region}
                           onChange={(e) => setEditedUser({ ...editedUser, region: e.target.value })}
-                        />
+                          disabled = {isSaving}
+                       />
                       </div>
                     </div>
                     <div className="flex space-x-2">
-                      <Button onClick={handleSave} size="sm">
-                        <Save className="w-4 h-4 mr-2" /> 저장
-                      </Button>
-                      <Button onClick={handleCancel} variant="outline" size="sm">
-                        <X className="w-4 h-4 mr-2" /> 취소
+
+                      <Button onClick={handleSave} size="sm" disabled = {isSaving}>
+                        {isSaving ? (
+                          <>
+                            <Loader2 className = "w-4 h-4 mr-2 animate-spin"/> 저장 중...
+                          </>
+                        ):(
+                          <>
+                            <Save className = "w-4 h-4 mr-2"/> 저장
+                          </>
+                        )}
+                      
+                      </Button> 
+                      <Button onClick = {handleCancel} variant= "outline" size = "sm" disabled = {isSaving}>
+                        <X className = "w-4 h-4 mr-2"/> 취소 
                       </Button>
                     </div>
                   </div>
