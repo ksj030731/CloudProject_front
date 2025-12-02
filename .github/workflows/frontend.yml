@@ -35,7 +35,7 @@ jobs:
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.KEY }}
+          password: ${{ secrets.PASSWORD }}
           port: 22
           source: "dist/*"        # 수정됨: 앞에 frontend/ 가 빠짐
           target: "/var/www/html"
