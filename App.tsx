@@ -75,7 +75,7 @@ export default function App() {
       // 👇 authToken이 없어도 요청을 보냅니다. (쿠키가 있으면 성공할 것이므로)
       const response = await axios.get('/api/user/me', { 
         headers: authToken ? { 'Authorization': `Bearer ${authToken}` } : {}, // 있으면 보내고, 없으면 맘
-        withCredentials: true // ✨ 이게 진짜 열쇠입니다
+        withCredentials: true 
       });
       
       const userData: User = response.data;
