@@ -4,11 +4,12 @@ import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { 
-  Heart, MapPin, Share2, QrCode, MessageCircle, ThumbsUp, CheckCircle, Car, Camera, Route, Star 
+import {
+  Heart, MapPin, Share2, QrCode, MessageCircle, ThumbsUp, CheckCircle, Car, Camera, Route, Star
 } from 'lucide-react';
 import { Course, Review, User } from '../types';
 import { ImageWithFallback } from './figma/ImageWithFallback';
+import { ReviewItem } from './ReviewItem';
 import { toast } from 'sonner';
 
 interface CourseDetailProps {
@@ -25,7 +26,7 @@ interface CourseDetailProps {
 
 export function CourseDetail({
   course,
-  reviews,
+  reviews: initialReviews,
   isFavorited,
   isCompleted,
   currentUser,
@@ -35,21 +36,29 @@ export function CourseDetail({
   onQRScanClick
 }: CourseDetailProps) {
 
+  // ✨ [수정] 리뷰 목록을 로컬 상태로 관리 (삭제 시 UI 업데이트를 위해)
+  const [reviews, setReviews] = useState<Review[]>(initialReviews);
+
+  // ✨ [추가] 리뷰 삭제 핸들러
+  const handleDeleteReview = (reviewId: number) => {
+    setReviews(prev => prev.filter(r => r.id !== reviewId));
+  };
+
   // ✨ [핵심 수정] DB 데이터와 Mock 데이터 구조 차이를 해결하는 로직
   // DB에는 'route' 객체가 없고 'sections' 배열이 있습니다.
-  
+
   // 1. sections 데이터가 있는지 확인
   const hasSections = course.sections && course.sections.length > 0;
-  
+
   // 2. 출발지/도착지 계산 (route가 있으면 쓰고, 없으면 sections의 처음과 끝을 사용)
   // @ts-ignore (타입 호환성 문제 방지)
   const startPoint = course.route?.start || (hasSections ? course.sections[0].startPoint : "출발지 정보 없음");
   // @ts-ignore
   const endPoint = course.route?.end || (hasSections ? course.sections[course.sections.length - 1].endPoint : "도착지 정보 없음");
-  
+
   // 3. 경유지(Checkpoints) 계산
   // @ts-ignore
-  const allCheckpoints = course.route?.checkpoints || 
+  const allCheckpoints = course.route?.checkpoints ||
     (hasSections ? course.sections.flatMap(s => s.checkpoints) : []);
 
 
@@ -62,19 +71,19 @@ export function CourseDetail({
     }
   };
 
-  const averageRating = reviews.length > 0 
-    ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length 
+  const averageRating = reviews.length > 0
+    ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
     : 0;
 
   const handleShare = async () => {
-     if (navigator.share) {
+    if (navigator.share) {
       try {
         await navigator.share({
           title: course.name,
           text: course.description,
           url: window.location.href
         });
-      } catch (err) {}
+      } catch (err) { }
     } else {
       try {
         await navigator.clipboard.writeText(window.location.href);
@@ -102,8 +111,8 @@ export function CourseDetail({
         <div className="space-y-6">
           {/* 헤더 이미지 영역 */}
           <div className="relative rounded-lg overflow-hidden">
-             <ImageWithFallback src={course.image} alt={course.name} className="w-full h-64 object-cover" />
-             {isCompleted && (
+            <ImageWithFallback src={course.image} alt={course.name} className="w-full h-64 object-cover" />
+            {isCompleted && (
               <div className="absolute top-4 left-4">
                 <div className="bg-green-500 text-white rounded-full px-3 py-1.5 flex items-center space-x-1 shadow-lg">
                   <CheckCircle className="w-4 h-4" />
@@ -111,7 +120,7 @@ export function CourseDetail({
                 </div>
               </div>
             )}
-             <div className="absolute top-4 right-4 flex space-x-2">
+            <div className="absolute top-4 right-4 flex space-x-2">
               <Button variant="secondary" size="sm" onClick={handleShare} className="bg-white/80 backdrop-blur-sm hover:bg-white">
                 <Share2 className="w-4 h-4 mr-2" /> 공유
               </Button>
@@ -126,7 +135,7 @@ export function CourseDetail({
 
           {/* 코스 기본 정보 */}
           <div className="space-y-4">
-             <div className="flex items-start justify-between">
+            <div className="flex items-start justify-between">
               <div className="space-y-2">
                 <h1 className="text-2xl font-bold">{course.name}</h1>
                 <div className="flex items-center text-gray-600">
@@ -142,10 +151,10 @@ export function CourseDetail({
                 </div>
               )}
             </div>
-             <p className="text-gray-700 leading-relaxed">{course.description}</p>
-             
-             {/* 통계 그리드 */}
-             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <p className="text-gray-700 leading-relaxed">{course.description}</p>
+
+            {/* 통계 그리드 */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="text-center p-3 bg-gray-50 rounded-lg">
                 <div className="text-2xl font-bold text-blue-600">{course.distance}km</div>
                 <div className="text-sm text-gray-600">거리</div>
@@ -176,7 +185,7 @@ export function CourseDetail({
             <CardContent>
               {hasSections ? (
                 <Tabs defaultValue="overview" className="w-full">
-                  <TabsList className="grid w-full grid-cols-auto mb-4" style={{gridTemplateColumns: `repeat(${course.sections.length + 1}, 1fr)`}}>
+                  <TabsList className="grid w-full grid-cols-auto mb-4" style={{ gridTemplateColumns: `repeat(${course.sections.length + 1}, 1fr)` }}>
                     <TabsTrigger value="overview">전체</TabsTrigger>
                     {course.sections.map((section, idx) => (
                       <TabsTrigger key={idx} value={section.sectionCode || String(idx)}>
@@ -197,7 +206,7 @@ export function CourseDetail({
                         <p className="text-gray-700">{endPoint}</p>
                       </div>
                     </div>
-                    
+
                     {allCheckpoints.length > 0 && (
                       <div>
                         <h4 className="font-medium mb-2">주요 경유지</h4>
@@ -209,7 +218,7 @@ export function CourseDetail({
                         </div>
                       </div>
                     )}
-                    
+
                     <div>
                       <h4 className="font-medium mb-2 flex items-center"><Car className="w-4 h-4 mr-1" /> 교통편</h4>
                       <p className="text-gray-700">{course.transportation}</p>
@@ -246,7 +255,7 @@ export function CourseDetail({
                           <p className="text-gray-700">{section.endPoint}</p>
                         </div>
                       </div>
-                      
+
                       {section.checkpoints && (
                         <div>
                           <h4 className="font-medium mb-2">구간 경유지</h4>
@@ -257,7 +266,7 @@ export function CourseDetail({
                           </div>
                         </div>
                       )}
-                      
+
                       <div className="pt-2 border-t border-gray-100">
                         <Button onClick={onQRScanClick} className="w-full bg-blue-500 hover:bg-blue-600">
                           <QrCode className="w-4 h-4 mr-2" />
@@ -275,9 +284,43 @@ export function CourseDetail({
             </CardContent>
           </Card>
 
+          {/* 리뷰 섹션 */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <MessageCircle className="w-5 h-5 mr-2" />
+                  리뷰 ({reviews.length})
+                </div>
+                <Button variant="outline" size="sm" onClick={onReviewClick}>
+                  리뷰 작성하기
+                </Button>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {reviews.length > 0 ? (
+                  reviews.map((review) => (
+                    <ReviewItem
+                      key={review.id}
+                      review={review}
+                      currentUser={currentUser}
+                      onDelete={handleDeleteReview} // ✨ [추가] 삭제 핸들러 전달
+                    />
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-lg">
+                    <p className="mb-2">아직 작성된 리뷰가 없습니다.</p>
+                    <p className="text-sm">첫 번째 리뷰의 주인공이 되어보세요!</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
           {/* ... 편의시설, 하이라이트, 리뷰 등 나머지 카드들은 course 객체의 1차원 데이터라 문제 없음 ... */}
           {/* (코드 생략 - 기존 파일 내용 유지) */}
-          
+
         </div>
       </DialogContent>
     </Dialog>

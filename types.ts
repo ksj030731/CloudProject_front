@@ -17,10 +17,11 @@ export interface Badge {
   name: string;
   description: string;
   icon?: string;
-  image?: string; 
-  condition?: string;
-  rarity?: string;
-  acquiredDate?: string;
+  image?: string;
+  content: string;
+  date: string;
+  author: string;
+  category: string;
 }
 
 // 3. 리뷰 정보 (Review)
@@ -34,26 +35,36 @@ export interface Review {
   photos: string[];
   date: string;
   likes: number;
+  commentCount: number;
 }
 
-// 4. 공지사항 정보 (Announcement) ✨ [추가됨]
+// 4. 리뷰 댓글 정보 (ReviewComment)
+export interface ReviewComment {
+  id: number;
+  reviewId: number;
+  userId: number;
+  userName: string;
+  content: string;
+  createdAt: string;
+}
+
+// 5. 공지사항 정보 (Announcement)
 export interface Announcement {
   id: number;
   title: string;
   content: string;
   date: string;
-  author: string;
-  category: string;
+  category: 'notice' | 'event' | 'maintenance';
 }
 
-// 5. 코스 구간 정보 (CourseSection)
+// 6. 코스 구간 정보 (CourseSection)
 export interface CourseSection {
   sectionCode: string;
   name: string;
   distance: number;
   duration: string;
   difficulty: string;
-  startPoint: string; 
+  startPoint: string;
   endPoint: string;
   checkpoints: string[];
   id?: string | number;
@@ -61,7 +72,7 @@ export interface CourseSection {
   end?: string;
 }
 
-// 6. 코스 정보 (Course)
+// 7. 코스 정보 (Course)
 export interface Course {
   id: number;
   name: string;
@@ -89,7 +100,7 @@ export interface Course {
   coordinates?: { lat: number; lng: number };
 }
 
-// 7. 랭킹 관련 타입
+// 8. 랭킹 관련 타입
 export interface UserRanking {
   userId: number;
   userName: string;
@@ -111,7 +122,7 @@ export interface CourseRanking {
   courseId: number;
   courseName: string;
   period?: string;
-  rankings?: UserRanking[]; 
+  rankings?: UserRanking[];
   topUsers?: UserRanking[];
   lastUpdated?: string;
 }

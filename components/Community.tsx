@@ -3,12 +3,12 @@ import { Card, CardContent, CardHeader } from './ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Button } from './ui/button';
 import { Avatar, AvatarFallback } from './ui/avatar';
-import { 
+import {
   MessageCircle, Trophy, ThumbsUp, MapPin, MessageSquare, PenSquare, Star, Megaphone
 } from 'lucide-react';
-// ✨ [수정] Badge 이름 충돌 해결 (Badge as BadgeType)
 import { Course, Review, User, Badge as BadgeType, Announcement, CourseRanking, GlobalRanking } from '../types';
 import { HallOfFame } from './HallOfFame';
+import { ReviewItem } from './ReviewItem';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Textarea } from './ui/textarea';
@@ -23,44 +23,26 @@ interface CommunityProps {
   badges: BadgeType[];
   completedCourses: number[];
   onCourseClick: (course: Course) => void;
-  
+
   announcements: Announcement[];
   courseRankings: CourseRanking[];
   globalRanking: GlobalRanking;
 }
 
-interface CommunityReview extends Review {
-  comments: Comment[];
-  liked: boolean;
-}
-
-interface Comment {
-  id: number;
-  userId: number;
-  userName: string;
-  content: string;
-  date: string;
-}
-
-export function Community({ 
-  courses, 
-  reviews, 
-  currentUser, 
+export function Community({
+  courses,
+  reviews,
+  currentUser,
   onCourseClick,
   announcements,
   courseRankings,
   globalRanking
 }: CommunityProps) {
-  
+
   const [selectedTab, setSelectedTab] = useState('reviews');
-  
-  const [communityReviews, setCommunityReviews] = useState<CommunityReview[]>(
-    reviews.map(review => ({
-      ...review,
-      comments: [],
-      liked: false
-    }))
-  );
+
+  // ReviewItem이 내부적으로 상태를 관리하므로, 여기서는 기본 Review 배열만 관리하면 됨
+  const [communityReviews, setCommunityReviews] = useState<Review[]>(reviews);
 
   const [isWriteModalOpen, setIsWriteModalOpen] = useState(false);
   const [newReview, setNewReview] = useState({
@@ -69,55 +51,33 @@ export function Community({
     content: ''
   });
 
-  const handleLike = (reviewId: number) => {
-    setCommunityReviews(prev => 
-      prev.map(review => 
-        review.id === reviewId 
-          ? { ...review, liked: !review.liked, likes: review.liked ? review.likes - 1 : review.likes + 1 }
-          : review
-      )
-    );
+  // ✨ [추가] 리뷰 삭제 핸들러
+  const handleDeleteReview = (reviewId: number) => {
+    setCommunityReviews(prev => prev.filter(r => r.id !== reviewId));
   };
 
-  const handleComment = (reviewId: number, content: string) => {
-    if (!currentUser || !content.trim()) return;
-    const newComment: Comment = {
-      id: Date.now(),
-      userId: currentUser.id,
-      userName: currentUser.nickname,
-      content: content.trim(),
-      date: new Date().toISOString()
-    };
-    setCommunityReviews(prev =>
-      prev.map(review =>
-        review.id === reviewId ? { ...review, comments: [...review.comments, newComment] } : review
-      )
-    );
-  };
-
-  // --- [수정됨] 리뷰 작성 및 DB 저장 함수 ---
+  // 리뷰 작성 및 DB 저장 함수
   const handleSubmitReview = async () => {
     // 1. 유효성 검사
     if (!currentUser) {
-        toast.error("로그인이 필요합니다.");
-        return;
+      toast.error("로그인이 필요합니다.");
+      return;
     }
     if (!newReview.courseId) {
-        toast.error("코스를 선택해주세요.");
-        return;
+      toast.error("코스를 선택해주세요.");
+      return;
     }
     if (!newReview.content.trim()) {
-        toast.error("내용을 입력해주세요.");
-        return;
+      toast.error("내용을 입력해주세요.");
+      return;
     }
 
     try {
-      // 2. 백엔드로 보낼 데이터 준비 (ReviewRequest DTO 형식)
-      // 주의: userName은 DTO에 없다면 제외해도 되지만, 필요하다면 포함하세요.
+      // 2. 백엔드로 보낼 데이터 준비
       const requestData = {
         courseId: newReview.courseId,
         userId: currentUser.id,
-        userName: currentUser.nickname, // (선택) 백엔드 DTO에 이 필드가 있다면 포함
+        userName: currentUser.nickname,
         rating: newReview.rating,
         content: newReview.content.trim()
       };
@@ -127,18 +87,11 @@ export function Community({
 
       // 4. 성공 시 처리
       if (response.status === 201 || response.status === 200) {
-        const savedReview = response.data; // DB에 저장된 실제 리뷰 데이터(ID 포함)
+        const savedReview = response.data; // DB에 저장된 실제 리뷰 데이터
 
-        // 5. 화면 목록 즉시 업데이트 (새로고침 없이 바로 보이게)
-        // 백엔드 응답 데이터에는 comments, liked 필드가 없으므로 초기값 추가
-        const newCommunityReview: CommunityReview = {
-          ...savedReview,
-          comments: [], // 새 글이니 댓글 없음
-          liked: false  // 새 글이니 좋아요 안 누른 상태
-        };
+        // 5. 화면 목록 업데이트
+        setCommunityReviews(prev => [savedReview, ...prev]); // ✨ [수정] 새 리뷰를 맨 앞에 추가 (최신순 유지)
 
-        setCommunityReviews(prev => [newCommunityReview, ...prev]);
-        
         // 6. 모달 닫기 및 초기화
         setIsWriteModalOpen(false);
         setNewReview({ courseId: 0, rating: 5, content: '' });
@@ -170,9 +123,9 @@ export function Community({
 
         <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-3 max-w-2xl mx-auto">
-            <TabsTrigger value="reviews" className="gap-2"><MessageCircle className="w-4 h-4"/> 리뷰 & 후기</TabsTrigger>
-            <TabsTrigger value="hall-of-fame" className="gap-2"><Trophy className="w-4 h-4"/> 명예의 전당</TabsTrigger>
-            <TabsTrigger value="notices" className="gap-2"><Megaphone className="w-4 h-4"/> 공지사항</TabsTrigger>
+            <TabsTrigger value="reviews" className="gap-2"><MessageCircle className="w-4 h-4" /> 리뷰 & 후기</TabsTrigger>
+            <TabsTrigger value="hall-of-fame" className="gap-2"><Trophy className="w-4 h-4" /> 명예의 전당</TabsTrigger>
+            <TabsTrigger value="notices" className="gap-2"><Megaphone className="w-4 h-4" /> 공지사항</TabsTrigger>
           </TabsList>
 
           {/* 1. 리뷰 탭 */}
@@ -191,8 +144,8 @@ export function Community({
                     <div className="space-y-4 py-4">
                       <div className="space-y-2">
                         <Label>코스 선택</Label>
-                        <Select 
-                          value={newReview.courseId.toString()} 
+                        <Select
+                          value={newReview.courseId.toString()}
                           onValueChange={(val) => setNewReview(prev => ({ ...prev, courseId: parseInt(val) }))}
                         >
                           <SelectTrigger><SelectValue placeholder="코스를 선택하세요" /></SelectTrigger>
@@ -211,11 +164,11 @@ export function Community({
                       </div>
                       <div className="space-y-2">
                         <Label>내용</Label>
-                        <Textarea 
-                          placeholder="후기를 작성해주세요." 
+                        <Textarea
+                          placeholder="후기를 작성해주세요."
                           value={newReview.content}
                           onChange={(e) => setNewReview(prev => ({ ...prev, content: e.target.value }))}
-                          rows={5} 
+                          rows={5}
                         />
                       </div>
                       <div className="flex justify-end gap-2">
@@ -237,38 +190,14 @@ export function Community({
                 communityReviews.map((review) => {
                   const course = getCourseById(review.courseId);
                   return (
-                    <Card key={review.id}>
-                      <CardHeader className="pb-3">
-                        <div className="flex justify-between items-start">
-                          <div className="flex items-center gap-3">
-                            <Avatar><AvatarFallback>{review.userName.charAt(0)}</AvatarFallback></Avatar>
-                            <div>
-                              <p className="font-medium">{review.userName}</p>
-                              <p className="text-xs text-gray-500">{formatDate(review.date)}</p>
-                            </div>
-                          </div>
-                          <div className="flex text-yellow-400">
-                            {[...Array(5)].map((_, i) => <Star key={i} className={`w-4 h-4 ${i < review.rating ? 'fill-current' : 'text-gray-300'}`} />)}
-                          </div>
-                        </div>
-                        {course && (
-                          <div className="mt-2 flex items-center gap-1 text-sm text-blue-600 cursor-pointer" onClick={() => onCourseClick(course)}>
-                            <MapPin className="w-3 h-3" /> {course.name}
-                          </div>
-                        )}
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        <p className="text-gray-700 whitespace-pre-line">{review.content}</p>
-                        <div className="flex justify-between items-center pt-4 border-t">
-                          <Button variant="ghost" size="sm" className="gap-1" onClick={() => handleLike(review.id)}>
-                            <ThumbsUp className={`w-4 h-4 ${review.liked ? 'fill-blue-500 text-blue-500' : ''}`} /> {review.likes}
-                          </Button>
-                          <div className="flex items-center gap-1 text-gray-500 text-sm">
-                            <MessageSquare className="w-4 h-4" /> {review.comments.length}
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
+                    <ReviewItem
+                      key={review.id}
+                      review={review}
+                      currentUser={currentUser}
+                      courseName={course?.name}
+                      onCourseClick={() => course && onCourseClick(course)}
+                      onDelete={handleDeleteReview} // ✨ [추가] 삭제 핸들러 전달
+                    />
                   );
                 })
               )}
@@ -277,7 +206,6 @@ export function Community({
 
           {/* 2. 명예의 전당 탭 */}
           <TabsContent value="hall-of-fame">
-            {/* ✨ [수정] 중복 속성 없이 깔끔하게 전달 */}
             <HallOfFame
               courses={courses}
               courseRankings={courseRankings}
