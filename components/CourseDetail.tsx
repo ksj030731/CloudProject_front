@@ -21,7 +21,7 @@ interface CourseDetailProps {
   onClose: () => void;
   onFavoriteClick: () => void;
   onReviewClick: () => void;
-  onQRScanClick: () => void;
+  onQRScanClick: (sectionId: number) => void;
 }
 
 export function CourseDetail({
@@ -268,7 +268,7 @@ export function CourseDetail({
                       )}
 
                       <div className="pt-2 border-t border-gray-100">
-                        <Button onClick={onQRScanClick} className="w-full bg-blue-500 hover:bg-blue-600">
+                        <Button onClick={() => onQRScanClick(section.id)} className="w-full bg-blue-500 hover:bg-blue-600">
                           <QrCode className="w-4 h-4 mr-2" />
                           {section.name} QR 인증하기
                         </Button>

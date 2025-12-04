@@ -220,23 +220,29 @@ export default function App() {
     toast.success(!favorites.includes(courseId) ? '찜했습니다!' : '찜 해제했습니다.');
   };
 
-  const handleQRScan = () => {
-    if (!currentUser || !selectedCourse) return;
+  const handleQRScan = async (sectionId?: number) => {
+    setIsQRScanModalOpen(false); // 모달 닫기
 
-    if (!completedCourses.includes(selectedCourse.id)) {
-      // TODO: 백엔드 완주 API 호출 필요
-      const newCompleted = [...completedCourses, selectedCourse.id];
-      setCompletedCourses(newCompleted);
+    const toastId = toast.loading("QR 코드를 스캔하고 있습니다...");
 
-      const newTotalDistance = (currentUser.totalDistance || 0) + selectedCourse.distance;
-      setCurrentUser({ ...currentUser, totalDistance: newTotalDistance });
+    // 3초 지연 시뮬레이션
+    setTimeout(async () => {
+      try {
+        if (sectionId) {
+          // 백엔드 API 호출
+          await axios.post(`/api/courses/sections/${sectionId}/complete`);
+          toast.success("인증이 완료되었습니다!", { id: toastId });
 
-      toast.success(`${selectedCourse.name} 완주 인증이 완료되었습니다!`);
-      checkForNewBadges(newCompleted.length, newTotalDistance);
-    } else {
-      toast.info('이미 완주한 코스입니다.');
-    }
-    setIsQRScanModalOpen(false);
+          // 유저 정보 갱신 (거리, 완주 여부 등 업데이트 확인)
+          fetchUserWithToken();
+        } else {
+          toast.error("섹션 정보가 없습니다.", { id: toastId });
+        }
+      } catch (error) {
+        console.error("QR 인증 실패:", error);
+        toast.error("인증에 실패했습니다.", { id: toastId });
+      }
+    }, 3000);
   };
 
   const checkForNewBadges = (completedCount: number, totalDistance: number) => {
