@@ -55,13 +55,14 @@ export function RegisterSocial() {
 
     try {
       // Spring Boot API (e.g., /api/auth/register-social)로 폼 데이터를 전송
-      const response = await fetch('https://my-cloud-project2222.duckdns.org/api/auth/register-social', {
+      const response = await fetch('/api/auth/register-social', {
         method: 'POST',
+        // credentials: 'include', // 같은 도메인 취급이라 생략해도 되지만, 명시적으로 남겨두는 것도 좋습니다.
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}` // GUEST 토큰 전송
+          // 'Authorization': ... (세션 방식이라 필요 없음)
         },
-        body: JSON.stringify({ nickname, region }) // 폼 데이터 전송
+        body: JSON.stringify({ nickname, region }) 
       });
 
       if (!response.ok) {

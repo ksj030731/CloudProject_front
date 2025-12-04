@@ -17,6 +17,7 @@ import { BadgeModal } from './components/BadgeModal';
 import { Toaster } from './components/ui/sonner';
 import { toast } from 'sonner';
 
+
 // 1. 타입 Import
 import { Course, User, Review, Badge, CourseRanking, GlobalRanking, Announcement } from './types';
 
@@ -82,6 +83,7 @@ export default function App() {
       setCurrentUser(userData);
       setCompletedCourses(userData.completedCourses || []);
       setMyBadges(userData.badges || []);
+      setFavorites(userData.favorites || []);
       
       // 만약 로컬 스토리지가 비어있었다면, 다시 채워주는 센스 (선택 사항)
       if (!localStorage.getItem('authToken')) {
@@ -202,6 +204,7 @@ export default function App() {
       const response = await axios.get(`/api/courses/${course.id}`);
       if (response.status === 200) {
         setSelectedCourse(response.data);
+
       }
     } catch (error) {
       console.error("상세 정보 로딩 실패", error);
@@ -210,15 +213,39 @@ export default function App() {
 
   const closeCourseDetail = () => setSelectedCourse(null);
 
-  const toggleFavorite = (courseId: number) => {
+  const toggleFavorite = async (courseId: number) => {
     if (!currentUser) { 
         toast.error('로그인이 필요합니다.'); 
         openAuth('login'); // 로그인 모달 띄우기
         return; 
     }
-    // TODO: 백엔드에 찜하기 API 연동 필요 (현재는 프론트 상태만 변경)
-    setFavorites(prev => prev.includes(courseId) ? prev.filter(id => id !== courseId) : [...prev, courseId]);
-    toast.success(!favorites.includes(courseId) ? '찜했습니다!' : '찜 해제했습니다.');
+    
+    //낙관적 업데이트()
+    setFavorites(prev => 
+      prev.includes(courseId)
+        ? prev.filter(id => id != courseId) // 이미 있으면 뻄
+        : [...prev,courseId] //없으면 추가 
+    );
+    try {
+      //api 요청 찜 이미 있으면 삭제 , 없으면 추가 
+      await axios.post(`/api/courses/${courseId}/favorite`,{},{
+        withCredentials : true
+      });
+
+      const isNowFavorited = !favorites.includes(courseId); //state는 비동기라 반대로 계산
+
+    }catch (error){
+      console.error("찜하기 실패",error);
+      toast.error("요청 처리에 실패했습니다.");
+
+      // 3. 실패 시 롤백 (화면 다시 원래대로)
+        setFavorites(prev => 
+            prev.includes(courseId) 
+                ? prev.filter(id => id !== courseId) 
+                : [...prev, courseId]
+        );
+    }
+    
   };
 
   const handleQRScan = () => {
