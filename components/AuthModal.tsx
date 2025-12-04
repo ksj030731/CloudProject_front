@@ -8,6 +8,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 
+// 이렇게 수정하세요!
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+
 interface AuthModalProps {
   isOpen: boolean;
   mode: 'login' | 'signup';
@@ -107,7 +110,6 @@ export function AuthModal({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          username: email, // 백엔드 DTO 필드명에 맞춤
           password: password,
           email: email,
           nickname: nickname,
@@ -151,19 +153,19 @@ export function AuthModal({
     <div className="space-y-2">
       {/* 카카오 */}
       <Button asChild variant="outline" className="w-full bg-[#FEE500] hover:bg-[#FEE500]/90 text-black border-none h-10">
-        <a href="https://my-cloud-project2222.duckdns.org/oauth2/authorization/kakao" className="flex items-center justify-center w-full">
+        <a href={`${BASE_URL}/oauth2/authorization/kakao`} className="flex items-center justify-center w-full">
           <span className="mr-2 text-lg">💬</span> 카카오로 시작하기
         </a>
       </Button>
       {/* 네이버 */}
       <Button asChild variant="outline" className="w-full bg-[#03C75A] hover:bg-[#03C75A]/90 text-white border-none h-10">
-        <a href="https://my-cloud-project2222.duckdns.org/oauth2/authorization/naver" className="flex items-center justify-center w-full">
+        <a href={`${BASE_URL}/oauth2/authorization/naver`} className="flex items-center justify-center w-full">
           <span className="mr-2 font-bold text-lg">N</span> 네이버로 시작하기
         </a>
       </Button>
       {/* 구글 */}
       <Button asChild variant="outline" className="w-full bg-white hover:bg-gray-50 text-black border border-gray-300 h-10">
-        <a href="https://my-cloud-project2222.duckdns.org/oauth2/authorization/google" className="flex items-center justify-center w-full">
+        <a href={`${BASE_URL}/oauth2/authorization/google`} className="flex items-center justify-center w-full">
           <span className="mr-2 font-bold text-lg">G</span> 구글로 시작하기
         </a>
       </Button>

@@ -21,7 +21,7 @@ interface CourseDetailProps {
   onClose: () => void;
   onFavoriteClick: () => void;
   onReviewClick: () => void;
-  onQRScanClick: (sectionId: number) => void;
+  onQRScanClick: (sectionId?: number | string) => void;
 }
 
 export function CourseDetail({

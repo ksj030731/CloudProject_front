@@ -8,6 +8,7 @@ export interface User {
   totalDistance: number;
   completedCourses: number[];
   badges: Badge[];
+  favorites?: number[];
   picture?: string;
 }
 
@@ -16,12 +17,10 @@ export interface Badge {
   id: number;
   name: string;
   description: string;
-  icon?: string;
+  icon: string;
+  condition: string;
+  rarity: string;
   image?: string;
-  content: string;
-  date: string;
-  author: string;
-  category: string;
 }
 
 // 3. 리뷰 정보 (Review)

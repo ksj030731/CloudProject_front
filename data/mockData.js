@@ -9,6 +9,7 @@ export const mockCourses = [
         difficulty: "중",
         region: "기장군",
         image: "https://images.unsplash.com/photo-1703768516086-45eb97f36ce7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxrb3JlYW4lMjBiZWFjaCUyMGNvYXN0bGluZXxlbnwxfHx8fDE3NTkwMjE4ODJ8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral",
+        
         sections: [
             {
                 id: "1-1",
@@ -19,6 +20,7 @@ export const mockCourses = [
                 start: "임랑해수욕장",
                 end: "기장군청",
                 checkpoints: ["칠암항", "수산과학연구소", "일광해수욕장"]
+                
             },
             {
                 id: "1-2",

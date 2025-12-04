@@ -17,6 +17,7 @@ import { BadgeModal } from './components/BadgeModal';
 import { Toaster } from './components/ui/sonner';
 import { toast } from 'sonner';
 
+
 // 1. 타입 Import
 import { Course, User, Review, Badge, CourseRanking, GlobalRanking, Announcement } from './types';
 
@@ -74,13 +75,14 @@ export default function App() {
       // 👇 authToken이 없어도 요청을 보냅니다. (쿠키가 있으면 성공할 것이므로)
       const response = await axios.get('/api/user/me', {
         headers: authToken ? { 'Authorization': `Bearer ${authToken}` } : {}, // 있으면 보내고, 없으면 맘
-        withCredentials: true // ✨ 이게 진짜 열쇠입니다
+        withCredentials: true
       });
 
       const userData: User = response.data;
       setCurrentUser(userData);
       setCompletedCourses(userData.completedCourses || []);
       setMyBadges(userData.badges || []);
+      setFavorites(userData.favorites || []);
 
       // 만약 로컬 스토리지가 비어있었다면, 다시 채워주는 센스 (선택 사항)
       if (!localStorage.getItem('authToken')) {
@@ -147,8 +149,6 @@ export default function App() {
           setCurrentPage('registerSocial');
         } else {
           // 기존 페이지 유지 (새로고침 시) 또는 홈으로
-          // 여기서는 간단하게 홈으로 보냅니다. 
-          // (만약 '/courses' 같은 경로를 유지하고 싶다면 window.location.pathname을 활용하세요)
           setCurrentPage('home');
         }
 
@@ -160,7 +160,90 @@ export default function App() {
     initializeApp();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
   // --- 핸들러 함수들 ---
+
+  const openAuth = (mode: 'login' | 'signup') => {
+    setAuthMode(mode);
+    setIsAuthModalOpen(true);
+  };
+
+  const openCourseDetail = (course: Course) => {
+    setSelectedCourse(course);
+  };
+
+  const closeCourseDetail = () => {
+    setSelectedCourse(null);
+  };
+
+  const toggleFavorite = async (courseId: number) => {
+    if (!currentUser) {
+      toast.error('로그인이 필요합니다.');
+      openAuth('login'); // 로그인 모달 띄우기
+      return;
+    }
+
+    //낙관적 업데이트()
+    setFavorites(prev =>
+      prev.includes(courseId)
+        ? prev.filter(id => id != courseId) // 이미 있으면 뻄
+        : [...prev, courseId] //없으면 추가 
+    );
+    try {
+      //api 요청 찜 이미 있으면 삭제 , 없으면 추가 
+      await axios.post(`/api/courses/${courseId}/favorite`, {}, {
+        withCredentials: true
+      });
+
+      const isNowFavorited = !favorites.includes(courseId); //state는 비동기라 반대로 계산
+
+    } catch (error) {
+      console.error("찜하기 실패", error);
+      toast.error("요청 처리에 실패했습니다.");
+
+      // 3. 실패 시 롤백 (화면 다시 원래대로)
+      setFavorites(prev =>
+        prev.includes(courseId)
+          ? prev.filter(id => id !== courseId)
+          : [...prev, courseId]
+      );
+    }
+
+  };
+
+  const handleQRScan = () => {
+    if (!currentUser || !selectedCourse) return;
+
+    if (!completedCourses.includes(selectedCourse.id)) {
+      // TODO: 백엔드 완주 API 호출 필요
+      const newCompleted = [...completedCourses, selectedCourse.id];
+      setCompletedCourses(newCompleted);
+
+      const newTotalDistance = (currentUser.totalDistance || 0) + selectedCourse.distance;
+      setCurrentUser({ ...currentUser, totalDistance: newTotalDistance });
+
+      toast.success(`${selectedCourse.name} 완주 인증이 완료되었습니다!`);
+      checkForNewBadges(newCompleted.length, newTotalDistance);
+    } else {
+      toast.info('이미 완주한 코스입니다.');
+    }
+    setIsQRScanModalOpen(false);
+  };
+
+  const checkForNewBadges = (completedCount: number, totalDistance: number) => {
+    const newBadgesFound: Badge[] = [];
+    // 예시 로직: 첫 완주 뱃지
+    if (completedCount === 1) {
+      const badge = mockBadges.find(b => b.id === 1);
+      if (badge && !myBadges.find(b => b.id === badge.id)) newBadgesFound.push(badge);
+    }
+    // 뱃지 획득 시 모달 표시
+    if (newBadgesFound.length > 0) {
+      setMyBadges(prev => [...prev, ...newBadgesFound]);
+      setNewBadge(newBadgesFound[0]);
+      setIsBadgeModalOpen(true);
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('authToken');
@@ -184,85 +267,14 @@ export default function App() {
     };
 
     try {
-      // 사진 업로드 로직이 있다면 FormData 사용 필요 (현재는 JSON 전송 가정)
       const response = await axios.post('/api/reviews', reviewData);
-      setReviews(prev => [response.data, ...prev]); // ✨ [수정] 새 리뷰를 맨 앞에 추가 (최신순 유지)
+      setReviews(prev => [response.data, ...prev]); // 새 리뷰를 맨 앞에 추가 (최신순)
       setIsReviewModalOpen(false);
       toast.success('리뷰가 작성되었습니다!');
     } catch (error) {
       console.error(error);
       toast.error('리뷰 작성에 실패했습니다.');
     }
-  };
-
-  const openCourseDetail = async (course: Course) => {
-    setSelectedCourse(course);
-    try {
-      const response = await axios.get(`/api/courses/${course.id}`);
-      if (response.status === 200) {
-        setSelectedCourse(response.data);
-      }
-    } catch (error) {
-      console.error("상세 정보 로딩 실패", error);
-    }
-  };
-
-  const closeCourseDetail = () => setSelectedCourse(null);
-
-  const toggleFavorite = (courseId: number) => {
-    if (!currentUser) {
-      toast.error('로그인이 필요합니다.');
-      openAuth('login'); // 로그인 모달 띄우기
-      return;
-    }
-    // TODO: 백엔드에 찜하기 API 연동 필요 (현재는 프론트 상태만 변경)
-    setFavorites(prev => prev.includes(courseId) ? prev.filter(id => id !== courseId) : [...prev, courseId]);
-    toast.success(!favorites.includes(courseId) ? '찜했습니다!' : '찜 해제했습니다.');
-  };
-
-  const handleQRScan = async (sectionId?: number) => {
-    setIsQRScanModalOpen(false); // 모달 닫기
-
-    const toastId = toast.loading("QR 코드를 스캔하고 있습니다...");
-
-    // 3초 지연 시뮬레이션
-    setTimeout(async () => {
-      try {
-        if (sectionId) {
-          // 백엔드 API 호출
-          await axios.post(`/api/courses/sections/${sectionId}/complete`);
-          toast.success("인증이 완료되었습니다!", { id: toastId });
-
-          // 유저 정보 갱신 (거리, 완주 여부 등 업데이트 확인)
-          fetchUserWithToken();
-        } else {
-          toast.error("섹션 정보가 없습니다.", { id: toastId });
-        }
-      } catch (error) {
-        console.error("QR 인증 실패:", error);
-        toast.error("인증에 실패했습니다.", { id: toastId });
-      }
-    }, 3000);
-  };
-
-  const checkForNewBadges = (completedCount: number, totalDistance: number) => {
-    const newBadgesFound: Badge[] = [];
-    // 예시 로직: 첫 완주 뱃지
-    if (completedCount === 1) {
-      const badge = mockBadges.find(b => b.id === 1);
-      if (badge && !myBadges.find(b => b.id === badge.id)) newBadgesFound.push(badge);
-    }
-    // 뱃지 획득 시 모달 표시
-    if (newBadgesFound.length > 0) {
-      setMyBadges(prev => [...prev, ...newBadgesFound]);
-      setNewBadge(newBadgesFound[0]);
-      setIsBadgeModalOpen(true);
-    }
-  };
-
-  const openAuth = (mode: 'login' | 'signup') => {
-    setAuthMode(mode);
-    setIsAuthModalOpen(true);
   };
 
   // --- 렌더링 ---
