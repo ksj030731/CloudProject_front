@@ -168,8 +168,17 @@ export default function App() {
     setIsAuthModalOpen(true);
   };
 
-  const openCourseDetail = (course: Course) => {
-    setSelectedCourse(course);
+  const openCourseDetail = async (course: Course) => {
+    setSelectedCourse(course); // 일단 리스트 정보로 빨리 띄우고
+    try {
+      // 상세 정보를 서버에서 최신으로 다시 가져옴 (이 부분이 빠짐!)
+      const response = await axios.get(`/api/courses/${course.id}`);
+      if (response.status === 200) {
+        setSelectedCourse(response.data);
+      }
+    } catch (error) {
+      console.error("상세 정보 로딩 실패", error);
+    }
   };
 
   const closeCourseDetail = () => {
