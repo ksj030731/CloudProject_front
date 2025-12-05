@@ -13,13 +13,13 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
-      // 2. [추가] 소셜 로그인 요청 (OAuth2)
+      // 2. 소셜 로그인 요청 (OAuth2)
       '/oauth2': {
         target: 'http://localhost:8080',
         changeOrigin: true,
         secure: false,
       },
-      // 3. [추가] 로그인/로그아웃 관련 요청
+      // 로그인/로그아웃 관련 요청
       '/login': {
         target: 'http://localhost:8080',
         changeOrigin: true,

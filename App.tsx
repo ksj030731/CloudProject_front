@@ -65,6 +65,8 @@ export default function App() {
   const [favorites, setFavorites] = useState<number[]>([]);
   const [completedCourses, setCompletedCourses] = useState<number[]>([]);
   const [myBadges, setMyBadges] = useState<Badge[]>([]);
+   //QR찍으면 코스 세부 정보 가져오는 변수 
+  const [completedSections, setCompletedSections] = useState<string[]>([]);
 
   // 5. 유저 정보 가져오기 (토큰 기반) 
   const fetchUserWithToken = async (token?: string) => {
@@ -168,7 +170,7 @@ export default function App() {
     setIsAuthModalOpen(true);
   };
 
-  const openCourseDetail = async (course: Course) => {
+ const openCourseDetail = async (course: Course) => {
     setSelectedCourse(course); // 일단 리스트 정보로 빨리 띄우고
     try {
       // 상세 정보를 서버에서 최신으로 다시 가져옴 (이 부분이 빠짐!)
@@ -179,7 +181,7 @@ export default function App() {
     } catch (error) {
       console.error("상세 정보 로딩 실패", error);
     }
-  };
+ };
 
   const closeCourseDetail = () => {
     setSelectedCourse(null);
@@ -220,26 +222,47 @@ export default function App() {
 
   };
 
-  const handleQRScan = () => {
+  /*
+  * QR코드 찎으면 데이터 파싱하고 코스 ID와 일치하는지 확인함 
+  * 구간별 인증 처리하고 , 그다음 상태를 이어서 작성하면 됨
+  */
+  const handleQRScan = (scannedData: string) => {
     if (!currentUser || !selectedCourse) return;
 
-    if (!completedCourses.includes(selectedCourse.id)) {
-      // TODO: 백엔드 완주 API 호출 필요
-      const newCompleted = [...completedCourses, selectedCourse.id];
-      setCompletedCourses(newCompleted);
+    //  데이터 파싱
+    const codeBody = scannedData.replace("GALMAETGIL_", "");
+    const [courseIdStr, sectionIdStr] = codeBody.split("-");
+    
+    const scannedCourseId = parseInt(courseIdStr);
+    const scannedSectionId = parseInt(sectionIdStr);
 
-      const newTotalDistance = (currentUser.totalDistance || 0) + selectedCourse.distance;
-      setCurrentUser({ ...currentUser, totalDistance: newTotalDistance });
-
-      toast.success(`${selectedCourse.name} 완주 인증이 완료되었습니다!`);
-      checkForNewBadges(newCompleted.length, newTotalDistance);
-    } else {
-      toast.info('이미 완주한 코스입니다.');
+    //  코스 ID 일치 여부 확인 (기본 검사)
+    if (scannedCourseId !== selectedCourse.id) {
+        toast.error(`잘못된 코스입니다. 현재 ${selectedCourse.id}코스 페이지입니다.`);
+        setIsQRScanModalOpen(false);
+        return;
     }
-    setIsQRScanModalOpen(false);
-  };
 
-  const checkForNewBadges = (completedCount: number, totalDistance: number) => {
+    //.  구간별 인증 처리
+    const sectionKey = `${scannedCourseId}-${scannedSectionId}`; // "1-1" 같은 고유 키 생성
+
+    if (completedSections.includes(sectionKey)) {
+        toast.info(`이미 인증된 구간입니다 (${scannedSectionId}구간).`);
+    } else {
+        // 새로운 구간 인증
+        const newSections = [...completedSections, sectionKey];
+        setCompletedSections(newSections);
+        
+        toast.success(`${selectedCourse.name}의 ${scannedSectionId}구간 인증 성공! 🎉`);
+
+        // TODO: 만약 1코스의 모든 구간(예: 1-1, 1-2, 1-3)을 다 모았다면?
+        // 그때 setCompletedCourses([...completedCourses, selectedCourse.id]) 를 실행해서
+        // '최종 완주' 배지를 주는 로직을 여기에 추가하면 됨
+    }
+
+    setIsQRScanModalOpen(false);
+ };
+ const checkForNewBadges = (completedCount: number, totalDistance: number) => {
     const newBadgesFound: Badge[] = [];
     // 예시 로직: 첫 완주 뱃지
     if (completedCount === 1) {
