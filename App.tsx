@@ -189,6 +189,29 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // 카카오 공유 
+  useEffect(() => {
+    if (courses.length > 0) {
+      // URL에서 courseId 파라미터 확인
+      const urlParams = new URLSearchParams(window.location.search);
+      const sharedCourseId = urlParams.get('courseId');
+
+      if (sharedCourseId) {
+        const courseToShow = courses.find(c => c.id === Number(sharedCourseId));
+        if (courseToShow) {
+          // 해당 코스 상세 모달 열기
+          setSelectedCourse(courseToShow);
+          
+          // API로 상세 정보 한 번 더 불러오기 (확실하게)
+          openCourseDetail(courseToShow);
+
+          // URL 깔끔하게 정리 (파라미터 제거)
+          window.history.replaceState({}, '', window.location.pathname);
+        }
+      }
+    }
+  }, [courses]); // courses가 변경(로딩 완료)될 때 실행됨
+
   // --- 핸들러 함수들 ---
 
   const openAuth = (mode: 'login' | 'signup') => {
