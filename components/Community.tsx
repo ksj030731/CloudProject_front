@@ -27,6 +27,7 @@ interface CommunityProps {
   announcements: Announcement[];
   courseRankings: CourseRanking[];
   globalRanking: GlobalRanking;
+  onUserRefresh: () => Promise<void>; // ✨ [추가]
 }
 
 export function Community({
@@ -36,7 +37,8 @@ export function Community({
   onCourseClick,
   announcements,
   courseRankings,
-  globalRanking
+  globalRanking,
+  onUserRefresh // ✨ [추가]
 }: CommunityProps) {
 
   const [selectedTab, setSelectedTab] = useState('reviews');
@@ -96,6 +98,9 @@ export function Community({
         setIsWriteModalOpen(false);
         setNewReview({ courseId: 0, rating: 5, content: '' });
         toast.success("리뷰가 등록되었습니다!");
+
+        // ✨ [추가] 리뷰 작성 후 뱃지/도전과제 갱신
+        await onUserRefresh();
       }
     } catch (error) {
       console.error("리뷰 저장 실패:", error);
@@ -196,9 +201,9 @@ export function Community({
                       currentUser={currentUser}
                       courseName={course?.name}
                       onCourseClick={() => course && onCourseClick(course)}
-                      onDelete={handleDeleteReview} // ✨ [추가] 삭제 핸들러 전달
-                    />
-                  );
+                      onDelete={handleDeleteReview}
+                      onUserRefresh={onUserRefresh} // ✨ [추가]
+                    />);
                 })
               )}
             </div>

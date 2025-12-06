@@ -1,0 +1,106 @@
+﻿
+> build
+> vite build
+
+[36mvite v7.2.2 [32mbuilding client environment for production...[36m[39m
+transforming...
+[32m✓[39m 29 modules transformed.
+node.exe : [31m✗[39m
+ Build failed in 811ms
+At line:1 char:1
++ & "C:\Program Files\
+nodejs/node.exe" "C:\P
+rogram Files\nodejs/no
+de_mo ...
++ ~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+~~~~~
+    + CategoryInfo    
+          : NotSpeci  
+  fied: ([31m✗[39   
+ m Build failed in    
+ 811ms:String) []    ,
+ RemoteException
+    + FullyQualifiedE 
+   rrorId : NativeCo  
+  mmandError
+ 
+[31merror during buil
+d:
+[31m[vite]: Rollup fa
+iled to resolve import
+ "html5-qrcode" from "
+D:/CloudProject_front/
+CloudProject_front/com
+ponents/QRScanModal.ts
+x".
+This is most likely un
+intended because it ca
+n break your applicati
+on at runtime.
+If you do want to exte
+rnalize this module ex
+plicitly add it to
+`build.rollupOptions.e
+xternal`[31m
+    at viteLog (file:/
+//D:/CloudProject_fron
+t/CloudProject_front/n
+ode_modules/vite/dist/
+node/chunks/config.js:
+34254:57)
+    at file:///D:/Clou
+dProject_front/CloudPr
+oject_front/node_modul
+es/vite/dist/node/chun
+ks/config.js:34288:73
+    at onwarn (file://
+/D:/CloudProject_front
+/CloudProject_front/no
+de_modules/@vitejs/plu
+gin-react/dist/index.j
+s:76:7)
+    at file:///D:/Clou
+dProject_front/CloudPr
+oject_front/node_modul
+es/vite/dist/node/chun
+ks/config.js:34288:28
+    at onRollupLog (fi
+le:///D:/CloudProject_
+front/CloudProject_fro
+nt/node_modules/vite/d
+ist/node/chunks/config
+.js:34283:63)
+    at onLog (file:///
+D:/CloudProject_front/
+CloudProject_front/nod
+e_modules/vite/dist/no
+de/chunks/config.js:34
+086:4)
+    at file:///D:/Clou
+dProject_front/CloudPr
+oject_front/node_modul
+es/rollup/dist/es/shar
+ed/node-entry.js:20937
+:32
+    at Object.logger [
+as onLog] (file:///D:/
+CloudProject_front/Clo
+udProject_front/node_m
+odules/rollup/dist/es/
+shared/node-entry.js:2
+2823:9)
+    at ModuleLoader.ha
+ndleInvalidResolvedId 
+(file:///D:/CloudProje
+ct_front/CloudProject_
+front/node_modules/rol
+lup/dist/es/shared/nod
+e-entry.js:21567:26)
+    at file:///D:/Clou
+dProject_front/CloudPr
+oject_front/node_modul
+es/rollup/dist/es/shar
+ed/node-entry.js:21525
+:26[39m

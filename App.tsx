@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Header } from './components/Header';
 import { Hero } from './components/Hero';
@@ -19,10 +19,10 @@ import { toast } from 'sonner';
 
 
 // 1. 타입 Import
-import { Course, User, Review, Badge, CourseRanking, GlobalRanking, Announcement } from './types';
+import { Course, User, Review, Badge, CourseRanking, GlobalRanking, Announcement, Challenge } from './types';
 
-// 2. Mock Data Import (뱃지 데이터 확인용)
-import { mockBadges } from './data/mockData';
+// 2. Mock Data Import (뱃지 데이터 확인용) - 제거됨 (백엔드 연동)
+// import { mockBadges } from './data/mockData';
 
 import './styles/globals.css';
 
@@ -51,7 +51,8 @@ export default function App() {
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [isQRScanModalOpen, setIsQRScanModalOpen] = useState(false);
   const [isBadgeModalOpen, setIsBadgeModalOpen] = useState(false);
-  const [newBadge, setNewBadge] = useState<Badge | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [newBadge, _setNewBadge] = useState<Badge | null>(null); // 사용되지 않음
 
   // ✨ [데이터 상태]
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -65,6 +66,9 @@ export default function App() {
   const [favorites, setFavorites] = useState<number[]>([]);
   const [completedCourses, setCompletedCourses] = useState<number[]>([]);
   const [myBadges, setMyBadges] = useState<Badge[]>([]);
+  const [challenges, setChallenges] = useState<Challenge[]>([]); // ✨ [추가됨]
+  //QR찍으면 코스 세부 정보 가져오는 변수 
+  const [completedSections, setCompletedSections] = useState<string[]>([]);
 
   // 5. 유저 정보 가져오기 (토큰 기반) 
   const fetchUserWithToken = async (token?: string) => {
@@ -74,15 +78,38 @@ export default function App() {
     try {
       // 👇 authToken이 없어도 요청을 보냅니다. (쿠키가 있으면 성공할 것이므로)
       const response = await axios.get('/api/user/me', {
-        headers: authToken ? { 'Authorization': `Bearer ${authToken}` } : {}, // 있으면 보내고, 없으면 맘
+        headers: authToken ? { 'Authorization': `Bearer ${authToken}` } : {},
         withCredentials: true
       });
 
       const userData: User = response.data;
+      const newBadgesList = userData.badges || [];
+
+      // ✨ [추가] 뱃지 획득 감지 로직
+      // 이전 뱃지 개수보다 새 뱃지 개수가 많으면 (또는 ID 비교)
+      if (currentUser && myBadges.length < newBadgesList.length) {
+        // 새로 얻은 뱃지 찾기 (기존 리스트에 없는 ID)
+        const currentBadgeIds = myBadges.map(b => b.id);
+        const newlyAcquired = newBadgesList.find(b => !currentBadgeIds.includes(b.id));
+
+        if (newlyAcquired) {
+          _setNewBadge(newlyAcquired);
+          setIsBadgeModalOpen(true);
+          // 축하 효과음 등을 여기서 재생할 수도 있음
+        }
+      }
+
       setCurrentUser(userData);
       setCompletedCourses(userData.completedCourses || []);
-      setMyBadges(userData.badges || []);
+      setMyBadges(newBadgesList);
       setFavorites(userData.favorites || []);
+
+      // ✨ [추가됨] 도전과제 정보도 같이 가져옴
+      const challengesRes = await axios.get('/api/user/challenges', {
+        headers: authToken ? { 'Authorization': `Bearer ${authToken}` } : {},
+        withCredentials: true
+      });
+      setChallenges(challengesRes.data);
 
       // 만약 로컬 스토리지가 비어있었다면, 다시 채워주는 센스 (선택 사항)
       if (!localStorage.getItem('authToken')) {
@@ -98,6 +125,7 @@ export default function App() {
       console.error("유저 정보 로드 실패 (로그인 안 된 상태):", error);
       localStorage.removeItem('authToken');
       setCurrentUser(null);
+      setChallenges([]); // 초기화
     }
   };
 
@@ -161,6 +189,29 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // 카카오 공유 
+  useEffect(() => {
+    if (courses.length > 0) {
+      // URL에서 courseId 파라미터 확인
+      const urlParams = new URLSearchParams(window.location.search);
+      const sharedCourseId = urlParams.get('courseId');
+
+      if (sharedCourseId) {
+        const courseToShow = courses.find(c => c.id === Number(sharedCourseId));
+        if (courseToShow) {
+          // 해당 코스 상세 모달 열기
+          setSelectedCourse(courseToShow);
+          
+          // API로 상세 정보 한 번 더 불러오기 (확실하게)
+          openCourseDetail(courseToShow);
+
+          // URL 깔끔하게 정리 (파라미터 제거)
+          window.history.replaceState({}, '', window.location.pathname);
+        }
+      }
+    }
+  }, [courses]); // courses가 변경(로딩 완료)될 때 실행됨
+
   // --- 핸들러 함수들 ---
 
   const openAuth = (mode: 'login' | 'signup') => {
@@ -204,7 +255,7 @@ export default function App() {
         withCredentials: true
       });
 
-      const isNowFavorited = !favorites.includes(courseId); //state는 비동기라 반대로 계산
+      // const isNowFavorited = !favorites.includes(courseId); //state는 비동기라 반대로 계산
 
     } catch (error) {
       console.error("찜하기 실패", error);
@@ -220,39 +271,58 @@ export default function App() {
 
   };
 
-  const handleQRScan = () => {
+  /*
+  * QR코드 찎으면 데이터 파싱하고 코스 ID와 일치하는지 확인함 
+  * 구간별 인증 처리하고 , 그다음 상태를 이어서 작성하면 됨
+  */
+  const handleQRScan = async (scannedData: string) => {
     if (!currentUser || !selectedCourse) return;
 
-    if (!completedCourses.includes(selectedCourse.id)) {
-      // TODO: 백엔드 완주 API 호출 필요
-      const newCompleted = [...completedCourses, selectedCourse.id];
-      setCompletedCourses(newCompleted);
+    //  데이터 파싱
+    const codeBody = scannedData.replace("GALMAETGIL_", "");
+    const [courseIdStr, sectionIdStr] = codeBody.split("-");
 
-      const newTotalDistance = (currentUser.totalDistance || 0) + selectedCourse.distance;
-      setCurrentUser({ ...currentUser, totalDistance: newTotalDistance });
+    const scannedCourseId = parseInt(courseIdStr);
+    const scannedSectionId = parseInt(sectionIdStr);
 
-      toast.success(`${selectedCourse.name} 완주 인증이 완료되었습니다!`);
-      checkForNewBadges(newCompleted.length, newTotalDistance);
-    } else {
-      toast.info('이미 완주한 코스입니다.');
+    //  코스 ID 일치 여부 확인 (기본 검사)
+    if (scannedCourseId !== selectedCourse.id) {
+      toast.error(`잘못된 코스입니다. 현재 ${selectedCourse.id}코스 페이지입니다.`);
+      setIsQRScanModalOpen(false);
+      return;
     }
+
+    // 서버로 인증 요청
+    try {
+      await axios.post(`/api/courses/${scannedCourseId}/sections/${scannedSectionId}/complete`, {}, {
+        withCredentials: true
+      });
+
+      //.  구간별 인증 처리
+      const sectionKey = `${scannedCourseId}-${scannedSectionId}`; // "1-1" 같은 고유 키 생성
+
+      if (completedSections.includes(sectionKey)) {
+        toast.info(`이미 인증된 구간입니다. (${scannedSectionId}구간)`);
+      } else {
+        // 새로운 구간 인증
+        const newSections = [...completedSections, sectionKey];
+        setCompletedSections(newSections);
+
+        toast.success(`${selectedCourse.name}의 ${scannedSectionId}구간 인증 성공! 🎉`);
+
+        // 유저 정보 갱신 (완주 여부, 뱃지 등 확인)
+        fetchUserWithToken();
+      }
+    } catch (error) {
+      console.error("QR 인증 실패:", error);
+      toast.error("QR 인증에 실패했습니다.");
+    }
+
     setIsQRScanModalOpen(false);
   };
 
-  const checkForNewBadges = (completedCount: number, totalDistance: number) => {
-    const newBadgesFound: Badge[] = [];
-    // 예시 로직: 첫 완주 뱃지
-    if (completedCount === 1) {
-      const badge = mockBadges.find(b => b.id === 1);
-      if (badge && !myBadges.find(b => b.id === badge.id)) newBadgesFound.push(badge);
-    }
-    // 뱃지 획득 시 모달 표시
-    if (newBadgesFound.length > 0) {
-      setMyBadges(prev => [...prev, ...newBadgesFound]);
-      setNewBadge(newBadgesFound[0]);
-      setIsBadgeModalOpen(true);
-    }
-  };
+  // mockBadges 제거와 함께 주석 처리됨
+  // const checkForNewBadges = (completedCount: number, totalDistance: number) => { ... }
 
   const handleLogout = () => {
     localStorage.removeItem('authToken');
@@ -264,7 +334,8 @@ export default function App() {
     toast.success('로그아웃되었습니다.');
   };
 
-  const handleReviewSubmit = async (rating: number, content: string, photos: File[]) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const handleReviewSubmit = async (rating: number, content: string, _photos: File[]) => {
     if (!currentUser || !selectedCourse) return;
 
     const reviewData = {
@@ -280,6 +351,10 @@ export default function App() {
       setReviews(prev => [response.data, ...prev]); // 새 리뷰를 맨 앞에 추가 (최신순)
       setIsReviewModalOpen(false);
       toast.success('리뷰가 작성되었습니다!');
+
+      // 리뷰 작성 후 뱃지 획득 여부 등을 확인하기 위해 유저 정보 갱신
+      await fetchUserWithToken();
+
     } catch (error) {
       console.error(error);
       toast.error('리뷰 작성에 실패했습니다.');
@@ -343,11 +418,12 @@ export default function App() {
           announcements={announcements}
           courseRankings={courseRankings}
           globalRanking={globalRanking}
+          onUserRefresh={() => fetchUserWithToken()} // ✨ [추가]
         />
       )}
 
       {currentPage === 'mypage' && currentUser && (
-        <MyPage user={currentUser} courses={courses} reviews={reviews} badges={myBadges} favorites={favorites} completedCourses={completedCourses} onCourseClick={openCourseDetail} onUserUpdate={setCurrentUser} allBadges={allBadges} />
+        <MyPage user={currentUser} courses={courses} reviews={reviews} badges={myBadges} favorites={favorites} completedCourses={completedCourses} challenges={challenges} onCourseClick={openCourseDetail} onUserUpdate={setCurrentUser} allBadges={allBadges} />
       )}
 
       {currentPage === 'admin' && (<AdminPage courses={courses} onCoursesUpdate={setCourses} />)}
@@ -380,7 +456,28 @@ export default function App() {
       />
 
       <ReviewModal isOpen={isReviewModalOpen} courseName={selectedCourse?.name || ''} onClose={() => setIsReviewModalOpen(false)} onSubmit={handleReviewSubmit} />
-      <QRScanModal isOpen={isQRScanModalOpen} courseName={selectedCourse?.name || ''} onClose={() => setIsQRScanModalOpen(false)} onScan={handleQRScan} />
+      <QRScanModal
+        isOpen={isQRScanModalOpen}
+        courseName={selectedCourse?.name || ''}
+        courseId={selectedCourse?.id || 0}
+        sectionId={(() => {
+          if (!selectedCourse) return 1;
+          // 완료되지 않은 첫 번째 섹션을 찾음
+          for (const section of selectedCourse.sections) {
+            // section.id가 number일 수도 있고 string일 수도 있음 (types.ts 참고)
+            // completedSections는 "courseId-sectionId" 형태의 문자열 배열
+            const sectionKey = `${selectedCourse.id}-${section.id}`;
+            if (!completedSections.includes(sectionKey)) {
+              // section.id가 문자열("1")이어도 parseInt로 변환
+              return typeof section.id === 'string' ? parseInt(section.id) : section.id as number;
+            }
+          }
+          // 모든 섹션이 완료되었으면 마지막 섹션 ID 또는 1 반환 (혹은 예외 처리)
+          return 1;
+        })()}
+        onClose={() => setIsQRScanModalOpen(false)}
+        onScan={handleQRScan}
+      />
       <BadgeModal isOpen={isBadgeModalOpen} badge={newBadge} onClose={() => setIsBadgeModalOpen(false)} />
 
       {currentPage !== 'loading' && currentPage !== 'authCallback' && currentPage !== 'registerSocial' && (

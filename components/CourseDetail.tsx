@@ -11,6 +11,7 @@ import { Course, Review, User } from '../types';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { ReviewItem } from './ReviewItem';
 import { toast } from 'sonner';
+import { shareKakao } from '../utils/kakaoShare'; //카카오 공유 
 
 interface CourseDetailProps {
   course: Course;
@@ -76,6 +77,19 @@ export function CourseDetail({
     : 0;
 
   const handleShare = async () => {
+    console.log("👉 [CourseDetail] 공유 버튼 클릭됨!");
+
+    // 1. 카카오톡 공유 우선 시도
+    if (window.Kakao) {
+      try {
+        shareKakao(course);
+        return; // 성공 시 함수 종료
+      } catch (err) {
+        console.error('카카오 공유 에러:', err);
+      }
+    }
+
+    // 2. Web Share API (모바일 기본 공유)
     if (navigator.share) {
       try {
         await navigator.share({
@@ -83,8 +97,10 @@ export function CourseDetail({
           text: course.description,
           url: window.location.href
         });
-      } catch (err) { }
-    } else {
+      } catch (err) {}
+    } 
+    // 3. 클립보드 복사 (PC 등)
+    else {
       try {
         await navigator.clipboard.writeText(window.location.href);
         toast.success('링크가 복사되었습니다!');

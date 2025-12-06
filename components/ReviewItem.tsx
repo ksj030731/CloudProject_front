@@ -15,10 +15,11 @@ interface ReviewItemProps {
     onLikeToggle?: (reviewId: number, isLiked: boolean) => void;
     courseName?: string;
     onCourseClick?: () => void;
-    onDelete?: (reviewId: number) => void; // ✨ [추가] 삭제 콜백
+    onDelete?: (reviewId: number) => void;
+    onUserRefresh?: () => Promise<void>; // ✨ [추가] 유저 정보 갱신 콜백
 }
 
-export function ReviewItem({ review, currentUser, onLikeToggle, courseName, onCourseClick, onDelete }: ReviewItemProps) {
+export function ReviewItem({ review, currentUser, onLikeToggle, courseName, onCourseClick, onDelete, onUserRefresh }: ReviewItemProps) {
     const [isLiked, setIsLiked] = useState(false);
     const [likeCount, setLikeCount] = useState(review.likes);
     const [commentCount, setCommentCount] = useState(review.commentCount || 0);
@@ -52,6 +53,11 @@ export function ReviewItem({ review, currentUser, onLikeToggle, courseName, onCo
         try {
             await axios.post(`/api/reviews/${review.id}/like`, { userId: currentUser.id });
             if (onLikeToggle) onLikeToggle(review.id, !prevLiked);
+
+            // ✨ [추가] 좋아요 성공 시 유저 정보(뱃지 등) 갱신
+            if (onUserRefresh) {
+                await onUserRefresh();
+            }
         } catch (error) {
             setIsLiked(prevLiked);
             setLikeCount(prevCount);
