@@ -1,13 +1,10 @@
-// src/utils/weatherConverter.ts (정리된 최종 버전)
-
-// API 요청에 필요한 타입 정의
 export interface BaseDateTime {
     baseDate: string;
     baseTime: string;
 }
 
 // =================================================================
-// 🌟 초단기실황(Ncst) API 요청을 위한 Base Date/Time 계산 함수 (유지)
+// 🌟 초단기실황(Ncst) API 요청을 위한 Base Date/Time 계산 함수
 // API가 45분부터 직전 30분 발표 자료를 조회 가능하도록 규칙을 반영합니다.
 // =================================================================
 export function getBaseDateTime(): BaseDateTime {
@@ -39,7 +36,7 @@ export function getBaseDateTime(): BaseDateTime {
 }
 
 
-// 풍향 각도(degree)를 문자열로 변환하는 함수 (유지)
+// 풍향 각도(degree)를 문자열로 변환하는 함수
 export function getWindDirection(deg: number): string {
     if (deg > 337.5 || deg <= 22.5) return '북풍';
     if (deg > 22.5 && deg <= 67.5) return '북동풍';

@@ -1,7 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-// NOTE: getBaseDateTime, getWindDirection은 '../utils/weatherConverter'에 있다고 가정합니다.
-// 실제 사용을 위해서는 해당 유틸리티 파일이 필요합니다.
 import { getBaseDateTime, getWindDirection } from '../utils/weatherConverter';
 
 const API_KEY = import.meta.env.VITE_WEATHER_API_KEY;
@@ -20,16 +18,12 @@ export interface WeatherDetails {
     WSD: string; // 풍속 (Wind Speed)
     VEC: string; // 풍향 (각도)
     WIND_DIRECTION_KR: string; // 풍향 (한글)
-    // ❌ SKY, PTY, DESCRIPTION 필드는 UI에 직접 사용되지 않으므로 제거했습니다.
     SUMMARY_TEXT: string; // Hero의 요약 칸에 표시될 텍스트 (예: 18°C)
 }
 
 interface WeatherDisplayProps {
     onDataFetched: (data: WeatherDetails | null, loading: boolean, error: string | null) => void;
 }
-
-// ❌ getSkyDescription 함수는 SUMMARY_TEXT에서 날씨 상태 텍스트를 제거했으므로 더 이상 필요 없습니다.
-
 
 // 비정상 값(-999 등)을 확인하는 함수
 const isInvalidWeatherValue = (value: string | undefined): boolean => {
@@ -61,7 +55,6 @@ function WeatherDisplay({ onDataFetched }: WeatherDisplayProps) {
             const nx = HAEUNDAE_NX;
             const ny = HAEUNDAE_NY;
 
-            // ⚠️ NOTE: getBaseDateTime, getWindDirection은 '../utils/weatherConverter' 파일에서 import됨
             const { baseDate, baseTime } = getBaseDateTime();
 
             const params = {
@@ -94,10 +87,6 @@ function WeatherDisplay({ onDataFetched }: WeatherDisplayProps) {
                 throw new Error(currentError);
             }
 
-            // ❌ 디버깅 로그는 정리 후 제거하는 것이 좋습니다. 임시로 남겨두었으나, 최종 코드에서는 제거 권장.
-            // console.log(`[날씨 디버깅] API 응답 SKY 코드: ${weatherMap.SKY}, PTY 코드: ${weatherMap.PTY}`);
-
-            // ❌ description 변수 선언 제거 (사용하지 않음)
             const rn1Value = isInvalidWeatherValue(weatherMap.RN1) ? '0' : weatherMap.RN1;
 
             fetchedData = {
@@ -106,8 +95,6 @@ function WeatherDisplay({ onDataFetched }: WeatherDisplayProps) {
                 WSD: weatherMap.WSD,
                 VEC: weatherMap.VEC,
                 WIND_DIRECTION_KR: getWindDirection(parseFloat(weatherMap.VEC)),
-                // ❌ SKY, PTY, DESCRIPTION 필드 제거
-                // 상단 요약 칸에는 기온만 표시
                 SUMMARY_TEXT: `${weatherMap.T1H}°C`
             };
 
@@ -134,7 +121,7 @@ function WeatherDisplay({ onDataFetched }: WeatherDisplayProps) {
     }, [fetchWeather]); // fetchWeather를 의존성 배열에 포함
 
     // -----------------------------------------------------------------
-    // --- 렌더링 영역 (하단 상세 정보: 기온 항목 제거) ---
+    // --- 렌더링 영역
     // -----------------------------------------------------------------
 
     if (loading) {
@@ -155,10 +142,7 @@ function WeatherDisplay({ onDataFetched }: WeatherDisplayProps) {
 
     return (
         <div className="mt-4 p-3 bg-white/10 rounded-lg">
-
-            {/* 첫 번째 줄: 현재 기온 (요청에 따라 제거됨) */}
-
-            {/* 두 번째 줄: 바람 (순서 1) */}
+            {/* 바람 (순서 1) */}
             <div className="flex items-center justify-between">
                 <span className="text-white/90 text-sm">바람</span>
                 <span className="text-white font-medium">
@@ -166,7 +150,7 @@ function WeatherDisplay({ onDataFetched }: WeatherDisplayProps) {
                 </span>
             </div>
 
-            {/* 세 번째 줄: 강수량 (1시간) (순서 2) */}
+            {/*  강수량 (1시간) (순서 2) */}
             <div className="flex items-center justify-between mt-1">
                 <span className="text-white/90 text-sm">강수량 (1시간)</span>
                 <span className="text-white font-medium">
