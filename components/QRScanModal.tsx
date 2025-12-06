@@ -7,12 +7,14 @@ import { Html5QrcodeScanner } from 'html5-qrcode';
 interface QRScanModalProps {
   isOpen: boolean;
   courseName: string;
+  courseId: number; // ✨ [추가됨]
+  sectionId: number; // ✨ [추가됨]
   onClose: () => void;
   // 변경됨: 스캔된 텍스트(data)를 부모에게 전달해야 하므로 인자 추가
   onScan: (data: string) => void;
 }
 
-export function QRScanModal({ isOpen, courseName, onClose, onScan }: QRScanModalProps) {
+export function QRScanModal({ isOpen, courseName, courseId, sectionId, onClose, onScan }: QRScanModalProps) {
   const [scanStatus, setScanStatus] = useState<'ready' | 'scanning' | 'success' | 'error'>('ready');
   const scannerRef = useRef<Html5QrcodeScanner | null>(null);
 
@@ -48,8 +50,8 @@ export function QRScanModal({ isOpen, courseName, onClose, onScan }: QRScanModal
 
     const scanner = new Html5QrcodeScanner(
       "reader", // 이 ID를 가진 div에 카메라 화면이 렌더링됩니다.
-      { 
-        fps: 10, 
+      {
+        fps: 10,
         qrbox: { width: 250, height: 250 },
         aspectRatio: 1.0,
         showTorchButtonIfSupported: true
@@ -74,7 +76,7 @@ export function QRScanModal({ isOpen, courseName, onClose, onScan }: QRScanModal
   const handleScanSuccess = (decodedText: string) => {
     cleanupScanner(); // 스캔 성공하면 카메라 끄기
     setScanStatus('success');
-    
+
     // 성공 화면을 1.5초 정도 보여주고 데이터 전달 및 닫기
     setTimeout(() => {
       onScan(decodedText); // 부모 컴포넌트(App.tsx)로 스캔된 텍스트 전달
@@ -90,8 +92,8 @@ export function QRScanModal({ isOpen, courseName, onClose, onScan }: QRScanModal
 
   const handleManualInput = () => {
     // 수동 인증 (데모/테스트용)
-    // 실제로는 별도 입력 폼을 띄우거나 해야 하지만 여기선 테스트용 코드로 패스
-    const manualCode = "MANUAL_PASS"; 
+    // 실제 유효한 QR 코드 포맷을 생성하여 전달
+    const manualCode = `GALMAETGIL_${courseId}-${sectionId}`;
     handleScanSuccess(manualCode);
   };
 
@@ -113,7 +115,7 @@ export function QRScanModal({ isOpen, courseName, onClose, onScan }: QRScanModal
               <div className="w-24 h-24 mx-auto bg-blue-100 rounded-full flex items-center justify-center">
                 <QrCode className="w-12 h-12 text-blue-600" />
               </div>
-              
+
               <div className="space-y-2">
                 <h3 className="text-lg font-semibold">QR 코드 스캔 준비</h3>
                 <p className="text-gray-600 text-sm">
@@ -149,7 +151,7 @@ export function QRScanModal({ isOpen, courseName, onClose, onScan }: QRScanModal
             <div className="text-center space-y-4">
               {/* 라이브러리가 여기에 Video 요소를 삽입합니다 */}
               <div id="reader" className="w-full mx-auto overflow-hidden rounded-lg border-2 border-slate-200"></div>
-              
+
               <div className="space-y-2">
                 <p className="text-gray-600 text-sm animate-pulse">
                   QR 코드를 찾는 중...
@@ -168,14 +170,14 @@ export function QRScanModal({ isOpen, courseName, onClose, onScan }: QRScanModal
               <div className="w-24 h-24 mx-auto bg-green-100 rounded-full flex items-center justify-center">
                 <CheckCircle className="w-12 h-12 text-green-600" />
               </div>
-              
+
               <div className="space-y-2">
                 <h3 className="text-xl font-bold text-green-600">인식 성공!</h3>
                 <p className="text-gray-600">
                   완주 처리를 진행합니다...
                 </p>
               </div>
-              
+
               {/* 축하 애니메이션 효과 */}
               <div className="animate-bounce mt-4">
                 <div className="text-2xl">🎉</div>

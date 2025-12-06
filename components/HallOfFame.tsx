@@ -7,7 +7,7 @@ import { Trophy, Crown, Medal, MapPin, Calendar, Users } from 'lucide-react';
 import { Course, CourseRanking, GlobalRanking, User } from '../types';
 import distanceIcon from '../img/map.png';
 // Avatar 컴포넌트가 없다면 일반 img 태그나 div로 대체해야 함 (일단 있다고 가정)
-import { Avatar, AvatarFallback } from './ui/avatar'; 
+import { Avatar, AvatarFallback } from './ui/avatar';
 
 interface HallOfFameProps {
   courses: Course[];
@@ -17,11 +17,11 @@ interface HallOfFameProps {
   onCourseClick: (course: Course) => void;
 }
 
-export function HallOfFame({ 
-  courses, 
-  courseRankings, 
-  globalRanking, 
-  onCourseClick 
+export function HallOfFame({
+  courses,
+  courseRankings,
+  globalRanking,
+  onCourseClick
 }: HallOfFameProps) {
   const [selectedTab, setSelectedTab] = useState('course-rankings');
   const [selectedPeriod, setSelectedPeriod] = useState('all-time');
@@ -29,7 +29,7 @@ export function HallOfFame({
 
   // 선택된 코스 찾기 (없으면 첫 번째 코스 또는 null)
   const selectedCourseData = courses.find(c => c.id === parseInt(selectedCourseId)) || courses[0];
-  
+
   // 랭킹 데이터 찾기 (없으면 undefined)
   const selectedCourseRanking = courseRankings.find(cr => cr.courseId === parseInt(selectedCourseId));
 
@@ -50,8 +50,8 @@ export function HallOfFame({
     <div className="space-y-6">
       <Tabs value={selectedTab} onValueChange={setSelectedTab}>
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="course-rankings" className="gap-2"><MapPin className="w-4 h-4"/> 코스별 랭킹</TabsTrigger>
-          <TabsTrigger value="hall-of-fame" className="gap-2"><Crown className="w-4 h-4"/> 통합 랭킹</TabsTrigger>
+          <TabsTrigger value="course-rankings" className="gap-2"><MapPin className="w-4 h-4" /> 코스별 랭킹</TabsTrigger>
+          <TabsTrigger value="hall-of-fame" className="gap-2"><Crown className="w-4 h-4" /> 통합 랭킹</TabsTrigger>
         </TabsList>
 
         {/* 1. 코스별 랭킹 */}
@@ -114,8 +114,19 @@ export function HallOfFame({
                             </div>
                           </div>
                         </div>
-                        <div className="text-right text-sm font-bold">
-                          {user.bestTime || '-'}
+                        <div className="text-right">
+                          <div className="text-sm font-bold">
+                            {(user.rank || idx + 1) === 1 ? <span className="text-2xl">🥇</span> :
+                              (user.rank || idx + 1) === 2 ? <span className="text-2xl">🥈</span> :
+                                (user.rank || idx + 1) === 3 ? <span className="text-2xl">🥉</span> :
+                                  (user.bestTime || '-')}
+                          </div>
+                          {/* [복구] 코스별 누적 거리 표시 (메달 하단) */}
+                          {user.totalDistance !== undefined && (
+                            <div className="text-xs text-gray-500 mt-1">
+                              {user.totalDistance.toFixed(1)}km
+                            </div>
+                          )}
                         </div>
                       </CardContent>
                     </Card>
@@ -146,7 +157,8 @@ export function HallOfFame({
                       <div>
                         <div className="font-bold">{user.userName}</div>
                         <div className="text-sm text-gray-600 flex items-center gap-1">
-                          <Trophy className="w-3 h-3" /> 총 {user.totalCompletions || 0}회 완주
+                          {/* [수정] totalCompletions -> completionCount (백엔드 DTO와 일치) */}
+                          <Trophy className="w-3 h-3" /> 총 {user.completionCount || 0}회 완주
                         </div>
                       </div>
                     </div>

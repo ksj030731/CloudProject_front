@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { ImageWithFallback } from './figma/ImageWithFallback';
@@ -6,10 +6,10 @@ import aboutImage1 from '../img/introduce.png';
 import aboutImage2 from '../img/introduce2.png';
 import aboutImage3 from '../img/introduce3.png';
 import aboutImage4 from '../img/introduce_map.png';
-import { 
-  Calendar, 
-  MapPin, 
-  Users, 
+import {
+  Calendar,
+  MapPin,
+  Users,
   Award,
   Heart,
   Compass,
@@ -84,9 +84,9 @@ export function About() {
                     <div className="flex items-start space-x-3">
                       <Badge className="bg-blue-100 text-blue-700 mt-1">🌊</Badge>
                       <div>
-        				<p className="font-medium">부산갈맷길 이란?</p>
-                        <p className="text-sm">부산 지역 전역에 조성된 부산의 그린웨이를 지칭 ‘갈맷길’은 부산광역시 시민 공모를 통해 2009년 명칭으로 선정되었다.<br/>
-                            부산의 새인 ‘갈매기’와 ‘길’을 합성한 것으로 ‘갈매’는 순수 우리말로 ‘깊은 바다’라는 뜻 또한 가지고 있다.</p>
+                        <p className="font-medium">부산갈맷길 이란?</p>
+                        <p className="text-sm">부산 지역 전역에 조성된 부산의 그린웨이를 지칭 ‘갈맷길’은 부산광역시 시민 공모를 통해 2009년 명칭으로 선정되었다.<br />
+                          부산의 새인 ‘갈매기’와 ‘길’을 합성한 것으로 ‘갈매’는 순수 우리말로 ‘깊은 바다’라는 뜻 또한 가지고 있다.</p>
                       </div>
                     </div>
                   </div>
@@ -100,77 +100,77 @@ export function About() {
                   </div>
                 </div>
                 <div className="relative md:col-span-2">
-                    <div className="w-auto h-64 mx-auto overflow-hidden shadow-md border-1 border-white relative">
-                        <ImageWithFallback
-                            src={aboutImage2}
-                            alt={"갈맷길을 상징하는 아름다운 풍경"}
-                            className="w-full h-full object-cover"/>
-                    </div>
+                  <div className="w-auto h-64 mx-auto overflow-hidden shadow-md border-1 border-white relative">
+                    <ImageWithFallback
+                      src={aboutImage2}
+                      alt={"갈맷길을 상징하는 아름다운 풍경"}
+                      className="w-full h-full object-cover" />
+                  </div>
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
-          {/* 갈맷길 조성 개요*/}
-          <div className="mb-16">
-              <h2 className="text-center mb-6 text-3xl font-bold">갈맷길 조성 개요</h2>
-                  <Card className="bg-gradient-to-br from-gray-150 border-gray-150">
-                      <CardContent className="p-8">
-                          <div className="grid md:grid-cols-2 gap-8 items-center">
-                              <div className="md:col-span-1">
-                                  <div className="w-auto h-64 mx-auto overflow-hidden shadow-md border-1 border-white relative">
-                                      <ImageWithFallback
-                                          src={aboutImage3}
-                                          alt={"갈맷길을 상징하는 아름다운 풍경"}
-                                          className="w-full h-full object-cover"/>
-                                  </div>
-                              </div>
-
-                              <div className="relative md:col-span-1">
-                                  <div className="mt-6 p-4 text-right bg-gray-100 border-gray-100 rounded-lg">
-                                      <p className="text-lg font-semibold">그린웨이</p>
-                                      <p className="text-base mb-6">부산시는 2009년부터 집중적으로 걷기 좋은 탐방로 일명 그린웨이를 조성하였으며<br/>
-                                          기존 산책로 및 등산로를 활용했으나, 데크을 깔거나 새로이 조성한 길도 있었다</p>
-                                  </div>
-
-                                  <div className="mt-6 p-4 text-right bg-gray-100 border-gray-100 rounded-lg">
-                                      <p className="text-lg font-semibold">노선</p>
-                                      <p className="text-base">지형에 맞게 해안길, 숲길, 강변길, 도심길로구분(총 9코스). 사포지향(산, 바다, 강, 온천)<br/>
-                                          매력을 만끽할 수 있다. 2009년에서 2012년까지 갈맷길 20개 노선 263.8km가<br/>
-                                          정해졌고, 노선과 구간을 재정비하여 21개 구간 278.8km로 확대하여 운영하였고<br/>
-                                          1월부터는 기존 장거리 구간을 분할하는 등 이용객들이 더욱 쉽게 걸을 수 있도록<br/>
-                                          노선을 일부 개선하여 9코스 23개 노선으로 운영하고 있다</p>
-                                  </div>
-                              </div>
-                          </div>
-                      </CardContent>
-                  </Card>
-          </div>
-
-          {/*9개 코스 간단 설명*/}
-          <div className="container mx-auto px-4">
-              {/* 헤더 */}
-              <div className="text-center mb-6">
-                  <h1 className="mb-4 text-3xl font-bold">갈맷길 9개의 코스</h1>
-                  <p className="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed">
-                      갈맷길은 사포지향(바다, 강, 산, 온천)인 부산의 지역적 특성을 담고 있어 바닷가를 걷다보면 어느덧 산속이고, 산을 벗어나면 강이 있고,
-                      몸이 노곤하면 온천이 반겨주는 부산에만 있는 길이다.
-                      9개 코스 23개 구간으로 나누어지며 총 연장은 278.8㎞이다. 9개 코스를 모두 완보하려면 어른 걸음으로 약 91시간이 걸린다.
-                  </p>
-              </div>
-
-              {/* 소개 지도 */}
-              <div className="mb-16">
-                  <div className="relative rounded-2xl overflow-hidden">
-                      <ImageWithFallback
-                          src={aboutImage4}
-                          alt="갈맷길 전체 코스 지도"
-                          className="w-full h-full object-cover"
-                      />
+        {/* 갈맷길 조성 개요*/}
+        <div className="mb-16">
+          <h2 className="text-center mb-6 text-3xl font-bold">갈맷길 조성 개요</h2>
+          <Card className="bg-gradient-to-br from-gray-150 border-gray-150">
+            <CardContent className="p-8">
+              <div className="grid md:grid-cols-2 gap-8 items-center">
+                <div className="md:col-span-1">
+                  <div className="w-auto h-64 mx-auto overflow-hidden shadow-md border-1 border-white relative">
+                    <ImageWithFallback
+                      src={aboutImage3}
+                      alt={"갈맷길을 상징하는 아름다운 풍경"}
+                      className="w-full h-full object-cover" />
                   </div>
+                </div>
+
+                <div className="relative md:col-span-1">
+                  <div className="mt-6 p-4 text-right bg-gray-100 border-gray-100 rounded-lg">
+                    <p className="text-lg font-semibold">그린웨이</p>
+                    <p className="text-base mb-6">부산시는 2009년부터 집중적으로 걷기 좋은 탐방로 일명 그린웨이를 조성하였으며<br />
+                      기존 산책로 및 등산로를 활용했으나, 데크을 깔거나 새로이 조성한 길도 있었다</p>
+                  </div>
+
+                  <div className="mt-6 p-4 text-right bg-gray-100 border-gray-100 rounded-lg">
+                    <p className="text-lg font-semibold">노선</p>
+                    <p className="text-base">지형에 맞게 해안길, 숲길, 강변길, 도심길로구분(총 9코스). 사포지향(산, 바다, 강, 온천)<br />
+                      매력을 만끽할 수 있다. 2009년에서 2012년까지 갈맷길 20개 노선 263.8km가<br />
+                      정해졌고, 노선과 구간을 재정비하여 21개 구간 278.8km로 확대하여 운영하였고<br />
+                      1월부터는 기존 장거리 구간을 분할하는 등 이용객들이 더욱 쉽게 걸을 수 있도록<br />
+                      노선을 일부 개선하여 9코스 23개 노선으로 운영하고 있다</p>
+                  </div>
+                </div>
               </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/*9개 코스 간단 설명*/}
+        <div className="container mx-auto px-4">
+          {/* 헤더 */}
+          <div className="text-center mb-6">
+            <h1 className="mb-4 text-3xl font-bold">갈맷길 9개의 코스</h1>
+            <p className="text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed">
+              갈맷길은 사포지향(바다, 강, 산, 온천)인 부산의 지역적 특성을 담고 있어 바닷가를 걷다보면 어느덧 산속이고, 산을 벗어나면 강이 있고,
+              몸이 노곤하면 온천이 반겨주는 부산에만 있는 길이다.
+              9개 코스 23개 구간으로 나누어지며 총 연장은 278.8㎞이다. 9개 코스를 모두 완보하려면 어른 걸음으로 약 91시간이 걸린다.
+            </p>
           </div>
+
+          {/* 소개 지도 */}
+          <div className="mb-16">
+            <div className="relative rounded-2xl overflow-hidden">
+              <ImageWithFallback
+                src={aboutImage4}
+                alt="갈맷길 전체 코스 지도"
+                className="w-full h-full object-cover"
+              />
+            </div>
+          </div>
+        </div>
 
         {/* 주요 특징 */}
         <div className="mb-16">

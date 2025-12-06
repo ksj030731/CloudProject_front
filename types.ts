@@ -6,6 +6,7 @@ export interface User {
   region: string;
   joinDate: string;
   totalDistance: number;
+  completedCourseCount: number; // ✨ [추가됨] 완주한 코스 개수
   completedCourses: number[];
   badges: Badge[];
   picture?: string;
@@ -18,7 +19,7 @@ export interface Badge {
   name: string;
   description: string;
   icon?: string;
-  image?: string; 
+  image?: string;
   condition?: string;
   rarity?: string;
   acquiredDate?: string;
@@ -54,7 +55,7 @@ export interface CourseSection {
   distance: number;
   duration: string;
   difficulty: string;
-  startPoint: string; 
+  startPoint: string;
   endPoint: string;
   checkpoints: string[];
   id?: string | number;
@@ -112,7 +113,7 @@ export interface CourseRanking {
   courseId: number;
   courseName: string;
   period?: string;
-  rankings?: UserRanking[]; 
+  rankings?: UserRanking[];
   topUsers?: UserRanking[];
   lastUpdated?: string;
 }
@@ -120,5 +121,18 @@ export interface CourseRanking {
 export interface GlobalRanking {
   period: string;
   rankings: UserRanking[];
+  rankings: UserRanking[];
   lastUpdated: string;
+}
+
+// 8. 도전과제 정보 (Challenge) ✨ [추가됨]
+export interface Challenge {
+  id: number;
+  title: string;
+  description: string;
+  target: number;
+  current: number;
+  reward: string;
+  category: 'distance' | 'courses' | 'reviews' | 'social';
+  completed: boolean;
 }

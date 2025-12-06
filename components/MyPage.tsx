@@ -7,14 +7,14 @@ import { Label } from './ui/label';
 import { Badge } from './ui/badge'; // UI 컴포넌트 Badge
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Progress } from './ui/progress';
-import { 
-  User, 
-  Edit3, 
-  Save, 
-  X, 
-  Heart, 
-  Trophy, 
-  Camera, 
+import {
+  User,
+  Edit3,
+  Save,
+  X,
+  Heart,
+  Trophy,
+  Camera,
   MapPin,
   Calendar,
   Star,
@@ -26,21 +26,11 @@ import {
   Loader2
 } from 'lucide-react';
 // 타입 Badge는 이름 충돌 방지를 위해 BadgeType으로 별칭 사용
-import { User as UserType, Course, Review, Badge as BadgeType } from '../types';
+import { User as UserType, Course, Review, Badge as BadgeType, Challenge } from '../types';
+
 import { CourseCard } from './CourseCard';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { toast } from 'sonner';
-
-interface Challenge {
-  id: number;
-  title: string;
-  description: string;
-  target: number;
-  current: number;
-  reward: string;
-  category: 'distance' | 'courses' | 'reviews' | 'social';
-  completed: boolean;
-}
 
 interface MyPageProps {
   user: UserType;
@@ -51,103 +41,53 @@ interface MyPageProps {
   completedCourses: number[];
   onCourseClick: (course: Course) => void;
   onUserUpdate: (user: UserType) => void;
-  allBadges: BadgeType[]; 
+  allBadges: BadgeType[];
+  challenges: Challenge[]; // ✨ [추가됨] 백엔드에서 받아온 데이터
 }
 
-export function MyPage({ 
-  user, 
-  courses, 
-  reviews, 
+export function MyPage({
+  user,
+  courses,
+  reviews,
   badges: myBadges, // 획득한 뱃지
-  favorites, 
+  favorites,
   completedCourses,
   onCourseClick,
   onUserUpdate,
-  allBadges // 전체 뱃지 (App.tsx에서 넘겨줘야 함)
+  allBadges, // 전체 뱃지 (App.tsx에서 넘겨줘야 함)
+  challenges // ✨ [추가됨]
 }: MyPageProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedUser, setEditedUser] = useState(user);
 
-  const[isSaving , setIsSaving] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const favoriteCourses = courses.filter(course => favorites.includes(course.id));
   const userReviews = reviews.filter(review => review.userId === user.id);
   const completedCoursesData = courses.filter(course => completedCourses.includes(course.id));
-  
+
   const completionRate = (completedCourses.length / courses.length) * 100;
   const nextMilestone = completedCourses.length < 5 ? 5 : completedCourses.length < 10 ? 10 : 26;
 
-  // 도전과제 목록 (이건 로컬 로직이라 그대로 유지하거나 필요시 백엔드 연동)
-  const challenges: Challenge[] = [
-    {
-      id: 1,
-      title: '첫 발걸음',
-      description: '첫 번째 코스를 완주하세요',
-      target: 1,
-      current: completedCourses.length >= 1 ? 1 : 0,
-      reward: '새싹 탐험가 뱃지',
-      category: 'courses',
-      completed: completedCourses.length >= 1
-    },
-    {
-      id: 2,
-      title: '꾸준한 탐험가',
-      description: '5개 코스를 완주하세요',
-      target: 5,
-      current: Math.min(completedCourses.length, 5),
-      reward: '코스 마스터 뱃지',
-      category: 'courses',
-      completed: completedCourses.length >= 5
-    },
-    {
-      id: 3,
-      title: '장거리 워커',
-      description: '총 50km를 걸어보세요',
-      target: 50,
-      current: user?.totalDistance || 0,
-      reward: '워킹 챔피언 뱃지',
-      category: 'distance',
-      completed: (user?.totalDistance || 0) >= 50
-    },
-    {
-      id: 4,
-      title: '리뷰어',
-      description: '첫 번째 리뷰를 작성하세요',
-      target: 1,
-      current: userReviews.length >= 1 ? 1 : 0,
-      reward: '리뷰 마스터 뱃지',
-      category: 'reviews',
-      completed: userReviews.length >= 1
-    },
-    {
-      id: 5,
-      title: '사교적인 탐험가',
-      description: '다른 사용자의 리뷰에 5번 좋아요를 누르세요',
-      target: 5,
-      current: 0,
-      reward: '소셜 뱃지',
-      category: 'social',
-      completed: false
-    }
-  ];
+  // 이전 하드코딩된 challenges const는 제거됨
 
   //프로필 정보를 수정하는 메서드 
   const handleSave = async () => {
     //유효성 검사 
-    if(!editedUser.nickname.trim()){
+    if (!editedUser.nickname.trim()) {
       toast.error('닉네임을 입력해주세요.');
-      return ;
+      return;
     }
-    try{
+    try {
       setIsSaving(true); //로딩 시작 
-      
+
       //백앤드로 api/user/me (PUT 요청)
-      const response = await axios.put('api/user/me',{
-        nickname : editedUser.nickname,
-        region : editedUser.region,
+      const response = await axios.put('api/user/me', {
+        nickname: editedUser.nickname,
+        region: editedUser.region,
         //필요하면 프로필 이미지 변경 로직 추가 
-      },{
-        withCredentials : true
+      }, {
+        withCredentials: true
       });
 
       //성공 시 : q부모 컴포넌트(App.tsx)의 상태 업데이트 
@@ -158,10 +98,10 @@ export function MyPage({
 
       setIsEditing(false);
       toast.success('프로필이 성공적으로 업데이트되었습니다!');
-    }catch(error){
-      console.error("프로필 수정 실패",error);
+    } catch (error) {
+      console.error("프로필 수정 실패", error);
       toast.error('정보 수정에 실패했습니다. 잠시 후 다시 시도해주세요.');
-    }finally{
+    } finally {
       setIsSaving(false);
     }
   };
@@ -176,9 +116,8 @@ export function MyPage({
     return Array.from({ length: 5 }, (_, i) => (
       <Star
         key={i}
-        className={`w-4 h-4 ${
-          i < rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
-        }`}
+        className={`w-4 h-4 ${i < rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
+          }`}
       />
     ));
   };
@@ -231,7 +170,7 @@ export function MyPage({
                           id="nickname"
                           value={editedUser.nickname}
                           onChange={(e) => setEditedUser({ ...editedUser, nickname: e.target.value })}
-                          disabled = {isSaving}
+                          disabled={isSaving}
                         />
                       </div>
                       <div>
@@ -240,26 +179,26 @@ export function MyPage({
                           id="region"
                           value={editedUser.region}
                           onChange={(e) => setEditedUser({ ...editedUser, region: e.target.value })}
-                          disabled = {isSaving}
-                       />
+                          disabled={isSaving}
+                        />
                       </div>
                     </div>
                     <div className="flex space-x-2">
 
-                      <Button onClick={handleSave} size="sm" disabled = {isSaving}>
+                      <Button onClick={handleSave} size="sm" disabled={isSaving}>
                         {isSaving ? (
                           <>
-                            <Loader2 className = "w-4 h-4 mr-2 animate-spin"/> 저장 중...
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" /> 저장 중...
                           </>
-                        ):(
+                        ) : (
                           <>
-                            <Save className = "w-4 h-4 mr-2"/> 저장
+                            <Save className="w-4 h-4 mr-2" /> 저장
                           </>
                         )}
-                      
-                      </Button> 
-                      <Button onClick = {handleCancel} variant= "outline" size = "sm" disabled = {isSaving}>
-                        <X className = "w-4 h-4 mr-2"/> 취소 
+
+                      </Button>
+                      <Button onClick={handleCancel} variant="outline" size="sm" disabled={isSaving}>
+                        <X className="w-4 h-4 mr-2" /> 취소
                       </Button>
                     </div>
                   </div>
@@ -286,7 +225,7 @@ export function MyPage({
               {/* 활동 통계 */}
               <div className="grid grid-cols-2 gap-4 text-center">
                 <div className="p-3 bg-blue-50 rounded-lg">
-                  <div className="text-2xl font-bold text-blue-600">{completedCourses.length}</div>
+                  <div className="text-2xl font-bold text-blue-600">{user.completedCourseCount}</div>
                   <div className="text-sm text-gray-600">완주 코스</div>
                 </div>
                 <div className="p-3 bg-green-50 rounded-lg">
@@ -335,9 +274,9 @@ export function MyPage({
                 {nextMilestone}개 코스 완주까지 {nextMilestone - completedCourses.length}개 남았어요!
               </p>
               <div className="mt-2">
-                <Progress 
-                  value={(completedCourses.length / nextMilestone) * 100} 
-                  className="h-2" 
+                <Progress
+                  value={(completedCourses.length / nextMilestone) * 100}
+                  className="h-2"
                 />
               </div>
             </div>
@@ -353,9 +292,9 @@ export function MyPage({
                   <div key={course.id} className="bg-white p-3 rounded-lg border">
                     <h5 className="font-medium text-sm mb-1">{course.name}</h5>
                     <p className="text-xs text-gray-600 mb-2">{course.distance}km · {course.difficulty}</p>
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
+                    <Button
+                      size="sm"
+                      variant="outline"
                       onClick={() => onCourseClick(course)}
                       className="w-full"
                     >
@@ -413,7 +352,7 @@ export function MyPage({
                           isFavorited={favorites.includes(course.id)}
                           isCompleted={true}
                           onClick={() => onCourseClick(course)}
-                          onFavoriteClick={() => {}}
+                          onFavoriteClick={() => { }}
                           currentUser={user}
                         />
                       ))}
@@ -447,7 +386,7 @@ export function MyPage({
                         isFavorited={true}
                         isCompleted={completedCourses.includes(course.id)}
                         onClick={() => onCourseClick(course)}
-                        onFavoriteClick={() => {}}
+                        onFavoriteClick={() => { }}
                         currentUser={user}
                       />
                     ))}
