@@ -18,6 +18,7 @@ import { Toaster } from './components/ui/sonner';
 import { toast } from 'sonner';
 import { SafetyWidget } from './components/SafetyWidget';
 import { VisitorChart } from './components/VisitorChart';
+import { Chatbot } from './components/ui/Chatbot';
 
 // 1. 타입 Import
 import { Course, User, Review, Badge, CourseRanking, GlobalRanking, Announcement, Challenge } from './types';
@@ -545,6 +546,7 @@ export default function App() {
           <Footer />
         )
       }
+      <Chatbot />
       <Toaster />
     </div >
   );
