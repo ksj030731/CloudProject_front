@@ -2,10 +2,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { ImageWithFallback } from './figma/ImageWithFallback';
-import aboutImage1 from '../img/introduce.png';
-import aboutImage2 from '../img/introduce2.png';
-import aboutImage3 from '../img/introduce3.png';
-import aboutImage4 from '../img/introduce_map.png';
+const aboutImage1 = '/img/introduce.png';
+const aboutImage2 = '/img/introduce2.png';
+const aboutImage3 = '/img/introduce3.png';
+const aboutImage4 = '/img/introduce_map.png';
 import {
   Calendar,
   MapPin,

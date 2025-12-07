@@ -4,7 +4,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { Button } from './ui/button';
 import { ArrowRight, MapPin, Clock, Users } from 'lucide-react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
-import busanImage from '../img/background.png';
+const busanImage = '/img/background.png';
 import WeatherDisplay, { WeatherDetails } from './WeatherDisplay';
 
 interface HeroProps {

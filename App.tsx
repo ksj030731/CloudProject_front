@@ -139,16 +139,7 @@ export default function App() {
   useEffect(() => {
     const initializeApp = async () => {
       try {
-        // ✨ [추가] 방문자 수 카운팅 (세션 스토리지 활용하여 중복 카운팅 방지)
-        const hasVisitedToday = sessionStorage.getItem('hasVisitedToday');
-        if (!hasVisitedToday) {
-          try {
-            await axios.post('/api/visit/increment');
-            sessionStorage.setItem('hasVisitedToday', 'true');
-          } catch (e) {
-            console.error("방문자 카운트 실패", e);
-          }
-        }
+
 
         // --- [단계 1] 인증 체크 (로그인 시도) ---
         const urlToken = new URLSearchParams(window.location.search).get('token');

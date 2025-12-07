@@ -5,7 +5,7 @@ import { Button } from './ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Trophy, Crown, Medal, MapPin, Calendar, Users } from 'lucide-react';
 import { Course, CourseRanking, GlobalRanking, User } from '../types';
-import distanceIcon from '../img/map.png';
+const distanceIcon = '/img/map.png';
 // Avatar 컴포넌트가 없다면 일반 img 태그나 div로 대체해야 함 (일단 있다고 가정)
 import { Avatar, AvatarFallback } from './ui/avatar';
 
