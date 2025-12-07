@@ -4,7 +4,7 @@ import { getBaseDateTime, getWindDirection } from '../utils/weatherConverter';
 
 const API_KEY = import.meta.env.VITE_WEATHER_API_KEY;
 // 기상청 초단기실황(Ncst) API
-const API_URL = "http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst";
+const API_URL = "https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst";
 
 // 해운대 지역의 정확한 기상청 격자 좌표
 const HAEUNDAE_NX = 98;

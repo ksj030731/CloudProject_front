@@ -16,13 +16,13 @@ interface CourseCardProps {
   currentUser: User | null;
 }
 
-export function CourseCard({ 
-  course, 
-  isFavorited, 
-  isCompleted, 
-  onClick, 
+export function CourseCard({
+  course,
+  isFavorited,
+  isCompleted,
+  onClick,
   onFavoriteClick,
-  currentUser 
+  currentUser
 }: CourseCardProps) {
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
@@ -35,7 +35,7 @@ export function CourseCard({
 
   const handleShare = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    
+
     if (navigator.share) {
       try {
         await navigator.share({
@@ -83,17 +83,16 @@ export function CourseCard({
             variant="secondary"
             size="sm"
             onClick={(e: React.MouseEvent) => {
-              e.stopPropagation();
-              onFavoriteClick();
-            }}
+              e.stopPropagation();
+              onFavoriteClick();
+            }}
             className="bg-white/80 backdrop-blur-sm hover:bg-white p-2 h-auto"
           >
-            <Heart 
-              className={`w-4 h-4 ${
-                isFavorited 
-                  ? 'fill-red-500 text-red-500' 
+            <Heart
+              className={`w-4 h-4 ${isFavorited
+                  ? 'fill-red-500 text-red-500'
                   : 'text-gray-600'
-              }`} 
+                }`}
             />
           </Button>
         )}
@@ -107,7 +106,7 @@ export function CourseCard({
             alt={course.name}
             className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
           />
-          
+
           {/* 그라데이션 오버레이 */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
         </div>
@@ -134,7 +133,7 @@ export function CourseCard({
                 </Badge>
               </div>
               <div className="flex items-center text-xs text-gray-500">
-                <span>{course.completedCount || 124}명</span>
+                <span>{course.completedCount || 0}명</span>
                 <Users className="w-3 h-3 ml-1" />
               </div>
             </div>
@@ -154,7 +153,7 @@ export function CourseCard({
           {/* 하이라이트 */}
           <div className="flex items-center gap-2 pt-2 border-t border-gray-100">
             {course.highlights.slice(0, 2).map((highlight, index) => (
-              <span 
+              <span
                 key={index}
                 className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded-full"
               >

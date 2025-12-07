@@ -17,6 +17,7 @@ import { BadgeModal } from './components/BadgeModal';
 import { Toaster } from './components/ui/sonner';
 import { toast } from 'sonner';
 import { SafetyWidget } from './components/SafetyWidget';
+import { VisitorChart } from './components/VisitorChart';
 
 // 1. 타입 Import
 import { Course, User, Review, Badge, CourseRanking, GlobalRanking, Announcement, Challenge } from './types';
@@ -69,8 +70,8 @@ export default function App() {
   const [challenges, setChallenges] = useState<Challenge[]>([]); // ✨ [추가됨]
   //QR찍으면 코스 세부 정보 가져오는 변수 
   const [completedSections, setCompletedSections] = useState<string[]>([]);
- //현재 위치 가져오는 로직 (간단)
- const [currentLoc, setCurrentLoc] = useState<{lat: number, lng: number} | undefined>(undefined);
+  //현재 위치 가져오는 로직 (간단)
+  const [currentLoc, setCurrentLoc] = useState<{ lat: number, lng: number } | undefined>(undefined);
 
   // 5. 유저 정보 가져오기 (토큰 기반) 
   const fetchUserWithToken = async (token?: string) => {
@@ -137,6 +138,17 @@ export default function App() {
   useEffect(() => {
     const initializeApp = async () => {
       try {
+        // ✨ [추가] 방문자 수 카운팅 (세션 스토리지 활용하여 중복 카운팅 방지)
+        const hasVisitedToday = sessionStorage.getItem('hasVisitedToday');
+        if (!hasVisitedToday) {
+          try {
+            await axios.post('/api/visit/increment');
+            sessionStorage.setItem('hasVisitedToday', 'true');
+          } catch (e) {
+            console.error("방문자 카운트 실패", e);
+          }
+        }
+
         // --- [단계 1] 인증 체크 (로그인 시도) ---
         const urlToken = new URLSearchParams(window.location.search).get('token');
         const localToken = localStorage.getItem('authToken');
@@ -205,7 +217,7 @@ export default function App() {
         if (courseToShow) {
           // 해당 코스 상세 모달 열기
           setSelectedCourse(courseToShow);
-          
+
           // API로 상세 정보 한 번 더 불러오기 (확실하게)
           openCourseDetail(courseToShow);
 
@@ -216,7 +228,7 @@ export default function App() {
     }
   }, [courses]); // courses가 변경(로딩 완료)될 때 실행됨
 
-  
+
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -229,8 +241,8 @@ export default function App() {
         (err) => console.error("위치 파악 실패", err)
       );
     }
-  }, []); 
-  
+  }, []);
+
   // --- 핸들러 함수들 ---
 
   const openAuth = (mode: 'login' | 'signup') => {
@@ -354,7 +366,7 @@ export default function App() {
   };
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const handleReviewSubmit = async (rating: number, content: string, _photos: File[]) => {
+  const handleReviewSubmit = async (rating: number, content: string, photos: File[]) => {
     if (!currentUser || !selectedCourse) return;
 
     const reviewData = {
@@ -365,8 +377,19 @@ export default function App() {
       content,
     };
 
+    const formData = new FormData();
+    formData.append('reviewData', new Blob([JSON.stringify(reviewData)], { type: 'application/json' }));
+
+    photos.forEach(photo => {
+      formData.append('images', photo);
+    });
+
     try {
-      const response = await axios.post('/api/reviews', reviewData);
+      const response = await axios.post('/api/reviews', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
       setReviews(prev => [response.data, ...prev]); // 새 리뷰를 맨 앞에 추가 (최신순)
       setIsReviewModalOpen(false);
       toast.success('리뷰가 작성되었습니다!');
@@ -398,7 +421,7 @@ export default function App() {
       )}
       {/*긴급 메세지 보내는 창 */}
       {currentPage !== 'loading' && (
-        <SafetyWidget 
+        <SafetyWidget
           guardianPhone={currentUser?.guardianPhoneNumber || "01073105352"} // 유저 정보에 번호가 있다면 넣고, 없으면 112/119
           currentLocation={currentLoc}
         />
@@ -418,6 +441,10 @@ export default function App() {
               <CourseGrid courses={courses.slice(0, 6)} favorites={favorites} completedCourses={completedCourses} onCourseClick={openCourseDetail} onFavoriteClick={toggleFavorite} currentUser={currentUser} />
             </div>
           </section>
+
+          <section className="py-16 bg-gray-50">
+            <VisitorChart />
+          </section>
         </>
       )}
 
@@ -428,46 +455,53 @@ export default function App() {
             <CourseGrid courses={courses} favorites={favorites} completedCourses={completedCourses} onCourseClick={openCourseDetail} onFavoriteClick={toggleFavorite} currentUser={currentUser} />
           </div>
         </section>
-      )}
+      )
+      }
 
       {currentPage === 'map' && (<MapSection courses={courses} favorites={favorites} completedCourses={completedCourses} onCourseClick={openCourseDetail} onFavoriteClick={toggleFavorite} currentUser={currentUser} />)}
       {currentPage === 'about' && <About />}
 
-      {currentPage === 'community' && (
-        <Community
-          courses={courses}
-          reviews={reviews}
-          currentUser={currentUser}
-          badges={myBadges}
-          completedCourses={completedCourses}
-          onCourseClick={openCourseDetail}
-          announcements={announcements}
-          courseRankings={courseRankings}
-          globalRanking={globalRanking}
-          onUserRefresh={() => fetchUserWithToken()} // ✨ [추가]
-        />
-      )}
+      {
+        currentPage === 'community' && (
+          <Community
+            courses={courses}
+            reviews={reviews}
+            currentUser={currentUser}
+            badges={myBadges}
+            completedCourses={completedCourses}
+            onCourseClick={openCourseDetail}
+            announcements={announcements}
+            courseRankings={courseRankings}
+            globalRanking={globalRanking}
+            onUserRefresh={() => fetchUserWithToken()} // ✨ [추가]
+          />
+        )
+      }
 
-      {currentPage === 'mypage' && currentUser && (
-        <MyPage user={currentUser} courses={courses} reviews={reviews} badges={myBadges} favorites={favorites} completedCourses={completedCourses} challenges={challenges} onCourseClick={openCourseDetail} onUserUpdate={setCurrentUser} allBadges={allBadges} />
-      )}
+      {
+        currentPage === 'mypage' && currentUser && (
+          <MyPage user={currentUser} courses={courses} reviews={reviews} badges={myBadges} favorites={favorites} completedCourses={completedCourses} challenges={challenges} onCourseClick={openCourseDetail} onUserUpdate={setCurrentUser} allBadges={allBadges} />
+        )
+      }
 
       {currentPage === 'admin' && (<AdminPage courses={courses} onCoursesUpdate={setCourses} />)}
 
       {/* 모달 컴포넌트들 */}
-      {selectedCourse && (
-        <CourseDetail
-          course={selectedCourse}
-          reviews={reviews.filter(r => r.courseId === selectedCourse.id)}
-          isFavorited={favorites.includes(selectedCourse.id)}
-          isCompleted={completedCourses.includes(selectedCourse.id)}
-          currentUser={currentUser}
-          onClose={closeCourseDetail}
-          onFavoriteClick={() => toggleFavorite(selectedCourse.id)}
-          onReviewClick={() => setIsReviewModalOpen(true)}
-          onQRScanClick={() => setIsQRScanModalOpen(true)}
-        />
-      )}
+      {
+        selectedCourse && (
+          <CourseDetail
+            course={selectedCourse}
+            reviews={reviews.filter(r => r.courseId === selectedCourse.id)}
+            isFavorited={favorites.includes(selectedCourse.id)}
+            isCompleted={completedCourses.includes(selectedCourse.id)}
+            currentUser={currentUser}
+            onClose={closeCourseDetail}
+            onFavoriteClick={() => toggleFavorite(selectedCourse.id)}
+            onReviewClick={() => setIsReviewModalOpen(true)}
+            onQRScanClick={() => setIsQRScanModalOpen(true)}
+          />
+        )
+      }
 
       {/* ✨ [중요] AuthModal 연결 수정 
         - onSubmit 제거
@@ -506,10 +540,12 @@ export default function App() {
       />
       <BadgeModal isOpen={isBadgeModalOpen} badge={newBadge} onClose={() => setIsBadgeModalOpen(false)} />
 
-      {currentPage !== 'loading' && currentPage !== 'authCallback' && currentPage !== 'registerSocial' && (
-        <Footer />
-      )}
+      {
+        currentPage !== 'loading' && currentPage !== 'authCallback' && currentPage !== 'registerSocial' && (
+          <Footer />
+        )
+      }
       <Toaster />
-    </div>
+    </div >
   );
 }

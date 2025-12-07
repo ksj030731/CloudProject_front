@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Button } from './ui/button';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import {
-  MessageCircle, Trophy, ThumbsUp, MapPin, MessageSquare, PenSquare, Star, Megaphone
+  MessageCircle, Trophy, ThumbsUp, MapPin, MessageSquare, PenSquare, Star, Megaphone, Camera, X
 } from 'lucide-react';
 import { Course, Review, User, Badge as BadgeType, Announcement, CourseRanking, GlobalRanking } from '../types';
 import { HallOfFame } from './HallOfFame';
@@ -53,6 +53,29 @@ export function Community({
     content: ''
   });
 
+  // ✨ [추가] 사진 업로드 상태
+  const [photos, setPhotos] = useState<File[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length + photos.length > 5) {
+      toast.error('최대 5장까지 업로드할 수 있습니다.');
+      return;
+    }
+
+    setPhotos(prev => [...prev, ...files]);
+    // 미리보기 URL 생성
+    const newPreviewUrls = files.map(file => URL.createObjectURL(file));
+    setPreviewUrls(prev => [...prev, ...newPreviewUrls]);
+  };
+
+  const removePhoto = (index: number) => {
+    URL.revokeObjectURL(previewUrls[index]);
+    setPhotos(prev => prev.filter((_, i) => i !== index));
+    setPreviewUrls(prev => prev.filter((_, i) => i !== index));
+  };
+
   // ✨ [추가] 리뷰 삭제 핸들러
   const handleDeleteReview = (reviewId: number) => {
     setCommunityReviews(prev => prev.filter(r => r.id !== reviewId));
@@ -85,7 +108,19 @@ export function Community({
       };
 
       // 3. 백엔드 API 호출 (POST /api/reviews)
-      const response = await axios.post('/api/reviews', requestData);
+      // 3. 백엔드 API 호출 (POST /api/reviews) - FormData 사용
+      const formData = new FormData();
+      formData.append('reviewData', new Blob([JSON.stringify(requestData)], { type: 'application/json' }));
+
+      photos.forEach(photo => {
+        formData.append('images', photo);
+      });
+
+      const response = await axios.post('/api/reviews', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
 
       // 4. 성공 시 처리
       if (response.status === 201 || response.status === 200) {
@@ -96,7 +131,11 @@ export function Community({
 
         // 6. 모달 닫기 및 초기화
         setIsWriteModalOpen(false);
+        setIsWriteModalOpen(false);
         setNewReview({ courseId: 0, rating: 5, content: '' });
+        setPhotos([]);
+        previewUrls.forEach(url => URL.revokeObjectURL(url));
+        setPreviewUrls([]);
         toast.success("리뷰가 등록되었습니다!");
 
         // ✨ [추가] 리뷰 작성 후 뱃지/도전과제 갱신
@@ -175,6 +214,54 @@ export function Community({
                           onChange={(e) => setNewReview(prev => ({ ...prev, content: e.target.value }))}
                           rows={5}
                         />
+                      </div>
+
+                      {/* 사진 업로드 UI 추가 */}
+                      <div className="space-y-3">
+                        <Label>사진 추가 (선택사항)</Label>
+
+                        {previewUrls.length > 0 && (
+                          <div className="grid grid-cols-3 gap-2">
+                            {previewUrls.map((url, index) => (
+                              <div key={index} className="relative group">
+                                <img
+                                  src={url}
+                                  alt={`Preview ${index + 1}`}
+                                  className="w-full h-20 object-cover rounded-lg border"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => removePhoto(index)}
+                                  className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-70 hover:opacity-100 transition-opacity"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {photos.length < 5 && (
+                          <div>
+                            <input
+                              type="file"
+                              id="community-photo-upload"
+                              multiple
+                              accept="image/*"
+                              onChange={handlePhotoUpload}
+                              className="hidden"
+                            />
+                            <Label
+                              htmlFor="community-photo-upload"
+                              className="flex items-center justify-center w-full h-20 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-gray-400 transition-colors"
+                            >
+                              <div className="text-center">
+                                <Camera className="w-6 h-6 mx-auto mb-1 text-gray-400" />
+                                <span className="text-sm text-gray-600">사진 추가</span>
+                              </div>
+                            </Label>
+                          </div>
+                        )}
                       </div>
                       <div className="flex justify-end gap-2">
                         <Button variant="outline" onClick={() => setIsWriteModalOpen(false)}>취소</Button>

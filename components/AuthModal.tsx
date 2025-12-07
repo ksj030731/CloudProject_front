@@ -9,7 +9,7 @@ import { Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 
 // 이렇게 수정하세요!
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://my-cloud-project2222.duckdns.org';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -19,12 +19,12 @@ interface AuthModalProps {
   onModeChange: (mode: 'login' | 'signup') => void;
 }
 
-export function AuthModal({ 
-  isOpen, 
-  mode, 
-  onClose, 
-  onLoginSuccess, 
-  onModeChange 
+export function AuthModal({
+  isOpen,
+  mode,
+  onClose,
+  onLoginSuccess,
+  onModeChange
 }: AuthModalProps) {
   // 상태 관리
   const [email, setEmail] = useState('');
@@ -60,21 +60,21 @@ export function AuthModal({
   const handleLogin = async () => {
     setIsLoading(true);
     try {
-       const response = await fetch('/api/auth/login', {
+      const response = await fetch('/api/auth/login', {
         method: 'POST',
-        
+
         // 👇 [중요] 이 줄을 추가해야 브라우저가 세션 쿠키를 저장합니다!
-        credentials: 'include', 
-        
+        credentials: 'include',
+
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          username: email, 
-          password: password 
+        body: JSON.stringify({
+          username: email,
+          password: password
         }),
       });
 
       if (response.ok) {
-        const token = await response.text(); 
+        const token = await response.text();
         localStorage.setItem('authToken', token);
         toast.success('로그인되었습니다!');
         onLoginSuccess(); // 부모 컴포넌트에 성공 알림 (유저 정보 갱신 등)
@@ -195,24 +195,24 @@ export function AuthModal({
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="login-email">이메일</Label>
-                <Input 
-                  id="login-email" 
-                  type="email" 
-                  placeholder="name@example.com" 
+                <Input
+                  id="login-email"
+                  type="email"
+                  placeholder="name@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  required 
+                  required
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="login-password">비밀번호</Label>
                 <div className="relative">
-                  <Input 
-                    id="login-password" 
-                    type={showPassword ? "text" : "password"} 
+                  <Input
+                    id="login-password"
+                    type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    required 
+                    required
                   />
                   <Button
                     type="button"
@@ -249,21 +249,21 @@ export function AuthModal({
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="signup-email">이메일</Label>
-                <Input 
-                  id="signup-email" 
-                  type="email" 
+                <Input
+                  id="signup-email"
+                  type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  required 
+                  required
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="nickname">닉네임</Label>
-                <Input 
-                  id="nickname" 
+                <Input
+                  id="nickname"
                   value={nickname}
                   onChange={(e) => setNickname(e.target.value)}
-                  required 
+                  required
                 />
               </div>
               <div className="space-y-2">
@@ -282,12 +282,12 @@ export function AuthModal({
               <div className="space-y-2">
                 <Label htmlFor="signup-password">비밀번호</Label>
                 <div className="relative">
-                  <Input 
-                    id="signup-password" 
-                    type={showPassword ? "text" : "password"} 
+                  <Input
+                    id="signup-password"
+                    type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    required 
+                    required
                   />
                   <Button
                     type="button"
@@ -303,14 +303,14 @@ export function AuthModal({
               <div className="space-y-2">
                 <Label htmlFor="confirm-password">비밀번호 확인</Label>
                 <div className="relative">
-                  <Input 
-                    id="confirm-password" 
-                    type={showConfirmPassword ? "text" : "password"} 
+                  <Input
+                    id="confirm-password"
+                    type={showConfirmPassword ? "text" : "password"}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    required 
+                    required
                   />
-                   <Button
+                  <Button
                     type="button"
                     variant="ghost"
                     size="sm"
@@ -321,7 +321,7 @@ export function AuthModal({
                   </Button>
                 </div>
               </div>
-              
+
               <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 h-10" disabled={isLoading}>
                 {isLoading ? '가입 처리 중...' : '회원가입'}
               </Button>
