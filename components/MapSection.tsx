@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
-import { restroomCoordinates, AmenityMarker } from '../data/restroomData';
+import { restroomCoordinates, AmenityMarker } from '../data/restroomData.ts';
 import { NaverMap } from './NaverMap';
 
 import {
@@ -26,6 +26,7 @@ interface MapSectionProps {
   favorites: number[];
   completedCourses: number[];
   onCourseClick: (course: Course) => void;
+  onFavoriteClick: (courseId: number) => void;
   currentUser: User | null;
 }
 

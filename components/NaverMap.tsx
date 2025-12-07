@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import coursePaths, { PathCoordinate } from '../data/coursePaths';
-import { AmenityMarker } from '../data/restroomData';
+import { AmenityMarker } from '../data/restroomData.ts';
 import { Course } from '../types';
 
 // 네이버 지도 API 전역 객체 타입 정의

@@ -85,6 +85,7 @@ export function MyPage({
       const response = await axios.put('api/user/me', {
         nickname: editedUser.nickname,
         region: editedUser.region,
+        guardianPhoneNumber: editedUser.guardianPhoneNumber
         //필요하면 프로필 이미지 변경 로직 추가 
       }, {
         withCredentials: true
@@ -181,6 +182,22 @@ export function MyPage({
                           onChange={(e) => setEditedUser({ ...editedUser, region: e.target.value })}
                           disabled={isSaving}
                         />
+                      </div>
+                      <div className="md:col-span-2">
+                        <Label htmlFor="guardianPhone" className="text-red-600 font-bold flex items-center gap-1">
+                          🚨 안심 SOS 수신 번호
+                        </Label>
+                        <Input
+                          id="guardianPhone"
+                          value={editedUser.guardianPhoneNumber || ''}
+                          onChange={(e) => setEditedUser({ ...editedUser, guardianPhoneNumber: e.target.value })}
+                          placeholder="비상 시 연락할 보호자 번호 (- 없이 입력)"
+                          disabled={isSaving}
+                          className="border-red-200 focus:ring-red-500"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          * SOS 버튼을 누르면 이 번호로 현재 위치가 전송됩니다.
+                        </p>
                       </div>
                     </div>
                     <div className="flex space-x-2">

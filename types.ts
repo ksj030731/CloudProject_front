@@ -11,6 +11,7 @@ export interface User {
   badges: Badge[];
   picture?: string;
   favorites?: number[];
+  guardianPhoneNumber?: string;
 }
 
 // 2. 뱃지 정보 (Badge)
@@ -121,7 +122,7 @@ export interface CourseRanking {
 export interface GlobalRanking {
   period: string;
   rankings: UserRanking[];
-  rankings: UserRanking[];
+ 
   lastUpdated: string;
 }
 

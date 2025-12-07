@@ -16,7 +16,7 @@ import { QRScanModal } from './components/QRScanModal';
 import { BadgeModal } from './components/BadgeModal';
 import { Toaster } from './components/ui/sonner';
 import { toast } from 'sonner';
-
+import { SafetyWidget } from './components/SafetyWidget';
 
 // 1. 타입 Import
 import { Course, User, Review, Badge, CourseRanking, GlobalRanking, Announcement, Challenge } from './types';
@@ -69,6 +69,8 @@ export default function App() {
   const [challenges, setChallenges] = useState<Challenge[]>([]); // ✨ [추가됨]
   //QR찍으면 코스 세부 정보 가져오는 변수 
   const [completedSections, setCompletedSections] = useState<string[]>([]);
+ //현재 위치 가져오는 로직 (간단)
+ const [currentLoc, setCurrentLoc] = useState<{lat: number, lng: number} | undefined>(undefined);
 
   // 5. 유저 정보 가져오기 (토큰 기반) 
   const fetchUserWithToken = async (token?: string) => {
@@ -127,7 +129,9 @@ export default function App() {
       setCurrentUser(null);
       setChallenges([]); // 초기화
     }
+
   };
+
 
   // 6. [통합] 초기화 로직 (데이터 페칭 + 인증 및 라우팅)
   useEffect(() => {
@@ -212,6 +216,21 @@ export default function App() {
     }
   }, [courses]); // courses가 변경(로딩 완료)될 때 실행됨
 
+  
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setCurrentLoc({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          });
+        },
+        (err) => console.error("위치 파악 실패", err)
+      );
+    }
+  }, []); 
+  
   // --- 핸들러 함수들 ---
 
   const openAuth = (mode: 'login' | 'signup') => {
@@ -376,6 +395,13 @@ export default function App() {
           <div className="w-16 h-16 border-8 border-blue-500 border-t-transparent border-solid rounded-full animate-spin"></div>
           <p className="text-gray-500">데이터를 불러오는 중입니다...</p>
         </div>
+      )}
+      {/*긴급 메세지 보내는 창 */}
+      {currentPage !== 'loading' && (
+        <SafetyWidget 
+          guardianPhone={currentUser?.guardianPhoneNumber || "01073105352"} // 유저 정보에 번호가 있다면 넣고, 없으면 112/119
+          currentLocation={currentLoc}
+        />
       )}
 
       {/* 소셜 로그인 처리 페이지 */}
